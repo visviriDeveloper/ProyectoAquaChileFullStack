@@ -1,0 +1,2694 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+docs/
+  plans/
+    2026-10-05-mvp-psicolaboral.md
+  Actividad_Bases_MVP_AquaChile_DSY1104.docx
+vcm-psicolaboral/
+  public/
+    favicon.svg
+    icons.svg
+  src/
+    auth/
+      AuthContext.jsx
+      context.js
+      guards.jsx
+      useAuth.js
+    components/
+      AppSidebar.jsx
+      feedback.jsx
+      forms.jsx
+      NavbarBase.jsx
+      OfertaCard.jsx
+      PublicNavbar.jsx
+      StatCard.jsx
+      toast.js
+    data/
+      ofertas.js
+      seed.js
+    layouts/
+      AppLayout.jsx
+      PublicLayout.jsx
+    lib/
+      crypto.js
+      fechas.js
+      rut.js
+    pages/
+      app/
+        Dashboard.jsx
+        EvaluacionPage.jsx
+        NuevaSolicitudPage.jsx
+        OfertasAdminPage.jsx
+        SolicitudDetallePage.jsx
+        SolicitudesPage.jsx
+      public/
+        ForbiddenPage.jsx
+        LoginPage.jsx
+        NotFoundPage.jsx
+        OfertaDetallePage.jsx
+        OfertasPage.jsx
+        PostularPage.jsx
+    services/
+      authService.js
+      ofertasService.js
+      solicitudesService.js
+      store.js
+    App.css
+    App.jsx
+    index.css
+    main.jsx
+    theme.css
+  .gitignore
+  eslint.config.js
+  index.html
+  package.json
+  README.md
+  vite.config.js
+README.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="docs/plans/2026-10-05-mvp-psicolaboral.md">
+# MVP AquaChile — Plan de implementación
+
+> **Para ejecución:** inline en esta sesión, por coherencia del sistema visual (los
+> sub-skills `subagent-driven-development` / `executing-plans` no están disponibles
+> en este entorno).
+
+**Goal:** Completar el MVP funcional (auth por roles, solicitudes, evaluación,
+trazabilidad) manteniendo la estructura existente y elevando lo visual.
+
+**Architecture:** Frontend-only funcional. La capa `services/` existente ya simula
+latencia y anticipa un backend real (`ofertasService.js`). Se extiende ese patrón:
+persistencia en `localStorage` + `sessionStorage`, contraseñas solo como hash
+SHA-256 (WebCrypto), permisos verificados en la capa de servicios además de la UI.
+
+**Tech Stack:** React 19 + Vite 8 + React Router 7 + Bootstrap 5 (se mantiene) +
+react-hook-form + zod (se mantiene). Sin dependencias nuevas.
+
+---
+
+## 1. Modelo de datos
+
+- `usuario { id, nombre, email, passHash, rol }` — `rol: "analista" | "evaluador"`
+  (constante `ROLES` extensible; sin rol administrador por §2 del prompt).
+- `candidato { id, nombre, rut, correo, telefono, fechaRegistro, creadoPor }`
+- `solicitud { id, candidatoId, puesto, fechaCreacion, creadaPor, evaluadorId,
+  evaluacion { estado: "pendiente"|"finalizada", fechaInicio, fechaEvaluacion,
+  observaciones }, historial[] }`
+- `historial[] { fecha, actor, accion, detalle }` — trazabilidad.
+
+## 2. Rutas
+
+Público (se mantiene): `/`, `/ofertas/:id`, `/ofertas/:id/postular`, `/login`.
+App (`/app`, protegida): `index` dashboard, `solicitudes`, `solicitudes/nueva`
+(solo analista), `solicitudes/:id` (detalle), `solicitudes/:id/evaluacion`
+(solo evaluador), `ofertas` (solo analista, solo lectura, ya existe).
+`/403` + `*`. Sin redirects legacy (app sin uso productivo).
+
+## 3. Permisos (UI + servicios, no solo ocultar botones)
+
+| Acción | Analista | Evaluador |
+|---|---|---|
+| crear candidato + solicitud | ✅ | ❌ (servicio lanza) |
+| listar / ver detalle | todas | solo asignadas |
+| registrar fechas/observaciones | ❌ | ✅ asignadas |
+| cambiar estado pendiente↔finalizada | ❌ | ✅ asignadas + confirmación |
+
+## 4. Archivos
+
+Crear: `lib/crypto.js`, `data/seed.js`, `services/store.js`,
+`services/authService.js`, `services/solicitudesService.js`,
+`auth/AuthContext.jsx`, `auth/guards.jsx`, `components/feedback.jsx`
+(toast, empty, skeleton, confirm `<dialog>`, breadcrumbs),
+`components/forms.jsx` (Campo, EstadoBadge), `layouts/AppLayout.jsx`
+(sidebar), `components/AppSidebar.jsx`, páginas `app/*`, `public/ForbiddenPage.jsx`,
+`theme.css`.
+Modificar: `App.jsx`, `main.jsx`, `index.css`, `index.html`, `LoginPage.jsx`,
+`README.md`. Eliminar: `pages/admin/CandidatosPage.jsx` (fuera del MVP;
+los candidatos se gestionan vía solicitudes).
+
+## 5. Tareas
+
+- [ ] Tema visual + tokens + index.html
+- [ ] lib/store/seed + hashes + RUTs válidos
+- [ ] authService + AuthContext + guards
+- [ ] solicitudesService con permisos + historial
+- [ ] feedback/forms/sidebar/AppLayout
+- [ ] Login + Dashboard real + Solicitudes + Nueva + Detalle + Evaluación
+- [ ] README (usuarios prueba, decisiones, estructura)
+- [ ] Verificar: lint + build + screenshots 1440/390 + revisión rubric
+
+## 6. Decisiones documentadas (mínimo necesario, no negocio nuevo)
+
+- D1 Persistencia local en vez de backend: respeta "mantener estructura"; el
+  servicio es el seam para el backend real.
+- D2 Asignación automática al evaluador disponible (hoy 1 en seed); campo
+  `evaluadorId` ya permite selector futuro.
+- D3 Estado reversible pendiente↔finalizada con confirmación + historial.
+- D4 `fechaInicio` y `fechaEvaluacion` separadas: ambas se mencionan en el doc.
+- D5 RUT con validación módulo 11 (código ya existente); puesto con sugerencias
+  del catálogo de ofertas existente (datalist).
+- D6 `Ofertas` admin: solo lectura, solo analista ("consultar info del proceso").
+- D7 Sesión en `sessionStorage` (cierra con la pestaña); sin "recordar" ni
+  recuperación (no especificados).
+</file>
+
+<file path="vcm-psicolaboral/src/auth/AuthContext.jsx">
+import { useCallback, useState } from "react";
+import * as auth from "../services/authService";
+import { AuthContext } from "./context";
+
+export function AuthProvider({ children }) {
+  const [usuario, setUsuario] = useState(() => auth.sesionActual());
+
+  const entrar = useCallback(async (email, password) => {
+    const u = await auth.login(email, password);
+    setUsuario(u);
+    return u;
+  }, []);
+
+  const salir = useCallback(() => {
+    auth.logout();
+    setUsuario(null);
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ usuario, entrar, salir }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/auth/context.js">
+import { createContext } from "react";
+
+export const AuthContext = createContext(null);
+</file>
+
+<file path="vcm-psicolaboral/src/auth/guards.jsx">
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "./useAuth";
+
+// Protege rutas: exige sesión y, opcionalmente, uno de los roles indicados.
+export function RequireAuth() {
+  const { usuario } = useAuth();
+  if (!usuario) return <Navigate to="/login" replace />;
+  return <Outlet />;
+}
+
+export function RequireRole({ roles }) {
+  const { usuario } = useAuth();
+  if (!usuario) return <Navigate to="/login" replace />;
+  if (!roles.includes(usuario.rol)) return <Navigate to="/app/denegado" replace />;
+  return <Outlet />;
+}
+</file>
+
+<file path="vcm-psicolaboral/src/auth/useAuth.js">
+import { useContext } from "react";
+import { AuthContext } from "./context";
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth debe usarse dentro de <AuthProvider>.");
+  return ctx;
+}
+</file>
+
+<file path="vcm-psicolaboral/src/components/AppSidebar.jsx">
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/useAuth";
+import { ROLES } from "../data/seed";
+
+const Icon = ({ d }) => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+    <path d={d} strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ICONS = {
+  inicio: "M2.5 6.5 8 2l5.5 4.5V13.5a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V6.5Z",
+  lista: "M2.5 4h11M2.5 8h11M2.5 12h11",
+  nueva: "M8 2.5v11M2.5 8h11",
+  ofertas: "M3 5.5A1.5 1.5 0 0 1 4.5 4h7A1.5 1.5 0 0 1 13 5.5V13H3V5.5ZM6 4V2.5h4V4",
+  sitio: "M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12ZM2.5 8h11M8 2c-3 3.5-3 8.5 0 12 3-3.5 3-8.5 0-12Z",
+};
+
+export default function AppSidebar({ abierto, onNavegar }) {
+  const { usuario, salir } = useAuth();
+  const navigate = useNavigate();
+  const esAnalista = usuario?.rol === ROLES.ANALISTA;
+
+  const cerrarSesion = () => {
+    salir();
+    onNavegar();
+    navigate("/login");
+  };
+
+  const links = [
+    { to: "/app", label: "Inicio", end: true, icon: ICONS.inicio },
+    { to: "/app/solicitudes", label: "Solicitudes", icon: ICONS.lista },
+    esAnalista && { to: "/app/solicitudes/nueva", label: "Nueva solicitud", icon: ICONS.nueva },
+    esAnalista && { to: "/app/ofertas", label: "Ofertas", icon: ICONS.ofertas },
+  ].filter(Boolean);
+
+  return (
+    <aside className={`app-sidebar${abierto ? " open" : ""}`} aria-label="Panel lateral">
+      <div className="app-brand">
+        VcM Psicolaboral
+        <small>AquaChile · Reclutamiento</small>
+      </div>
+      <nav className="app-nav" aria-label="Principal">
+        {links.map((l) => (
+          <NavLink key={l.to} to={l.to} end={l.end} onClick={onNavegar}>
+            <Icon d={l.icon} /> {l.label}
+          </NavLink>
+        ))}
+        <NavLink to="/" onClick={onNavegar}>
+          <Icon d={ICONS.sitio} /> Ver sitio público
+        </NavLink>
+      </nav>
+      <div className="app-user">
+        <strong>{usuario?.nombre}</strong>
+        <span>{usuario?.cargo}</span>
+        <button type="button" className="btn btn-sm btn-outline-light mt-2 w-100" onClick={cerrarSesion}>
+          Cerrar sesión
+        </button>
+      </div>
+    </aside>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/components/feedback.jsx">
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { fechaHora } from "../lib/fechas";
+import { ToastContext } from "./toast";
+
+// ---- Toasts (solo confirmaciones; los errores van inline con role="alert") ----
+
+export function ToastProvider({ children }) {
+  const [avisos, setAvisos] = useState([]);
+  const avisar = useCallback((texto) => {
+    const id = Date.now() + Math.random();
+    setAvisos((prev) => [...prev, { id, texto }]);
+    setTimeout(() => setAvisos((prev) => prev.filter((a) => a.id !== id)), 4500);
+  }, []);
+  return (
+    <ToastContext.Provider value={{ avisar }}>
+      {children}
+      <div className="toasts" aria-live="polite" aria-atomic="true">
+        {avisos.map((a) => (
+          <div key={a.id} className="toast-msg">{a.texto}</div>
+        ))}
+      </div>
+    </ToastContext.Provider>
+  );
+}
+
+// ---- Estado vacío ----
+export function EmptyState({ titulo, texto, children }) {
+  return (
+    <div className="empty">
+      <h2 className="h5">{titulo}</h2>
+      <p className="mb-0">{texto}</p>
+      {children && <div className="mt-3">{children}</div>}
+    </div>
+  );
+}
+
+// ---- Carga: anuncio para lector + skeletons visuales ----
+export function Cargando({ texto = "Cargando…" }) {
+  return (
+    <div>
+      <p role="status">{texto}</p>
+      <div aria-hidden="true" className="d-grid gap-2">
+        <div className="skeleton" style={{ height: "3rem" }} />
+        <div className="skeleton" style={{ height: "3rem" }} />
+        <div className="skeleton" style={{ height: "3rem" }} />
+      </div>
+    </div>
+  );
+}
+
+// ---- Error recuperable ----
+export function ErrorCarga({ texto, onReintentar }) {
+  return (
+    <div className="alert alert-danger" role="alert">
+      {texto}{" "}
+      {onReintentar && (
+        <button type="button" className="btn btn-sm btn-outline-danger ms-2" onClick={onReintentar}>
+          Reintentar
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ---- Confirmación con <dialog> nativo (foco entra y vuelve al disparador) ----
+export function ConfirmDialog({ abierto, titulo, texto, etiquetaConfirmar = "Confirmar", onConfirmar, onCerrar }) {
+  const ref = useRef(null);
+  const previo = useRef(null);
+
+  useEffect(() => {
+    const dlg = ref.current;
+    if (!dlg) return;
+    if (abierto) {
+      previo.current = document.activeElement;
+      dlg.showModal();
+      dlg.querySelector("button[value='ok']")?.focus();
+    } else if (dlg.open) {
+      dlg.close();
+      previo.current?.focus?.();
+    }
+  }, [abierto ]);
+
+  return (
+    <dialog ref={ref} className="confirm" aria-labelledby="confirm-titulo" onClose={onCerrar}>
+      <h2 id="confirm-titulo" className="h5">{titulo}</h2>
+      <p>{texto}</p>
+      <div className="d-flex justify-content-end gap-2">
+        <button type="button" className="btn btn-outline-secondary" value="cancel" onClick={onCerrar}>
+          Cancelar
+        </button>
+        <button type="button" className="btn btn-primary" value="ok" onClick={onConfirmar}>
+          {etiquetaConfirmar}
+        </button>
+      </div>
+    </dialog>
+  );
+}
+
+// ---- Línea de tiempo de trazabilidad ----
+export function Timeline({ eventos }) {
+  if (!eventos?.length) return <p className="text-secondary mb-0">Sin movimientos registrados.</p>;
+  return (
+    <ol className="timeline">
+      {eventos.map((e, i) => (
+        <li key={`${e.fecha}-${i}`}>
+          <div><strong>{e.accion}</strong></div>
+          {e.detalle && <div className="text-secondary small">{e.detalle}</div>}
+          <time dateTime={e.fecha}>{fechaHora(e.fecha)} · {e.actor}</time>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+// ---- Breadcrumbs ----
+export function Breadcrumbs({ items }) {
+  return (
+    <nav aria-label="Ruta de navegación" className="crumbs">
+      <ol className="breadcrumb mb-0">
+        {items.map((it, i) => (
+          <li key={it.label} className="breadcrumb-item" aria-current={i === items.length - 1 ? "page" : undefined}>
+            {it.to && i < items.length - 1 ? <Link to={it.to}>{it.label}</Link> : it.label}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/components/forms.jsx">
+import { Children, cloneElement } from "react";
+
+// Campo accesible: asocia label, hint y error al control vía ids.
+// Si el hijo es un control directo (input/textarea/select) se le inyecta el
+// id; si es un envoltorio (ej. input-group), el input interno debe traer su
+// propio id igual al de este Campo.
+const CONTROLES = ["input", "textarea", "select"];
+
+export function Campo({ id, label, error, hint, children }) {
+  const desc = [hint && `${id}-hint`, error && `${id}-err`].filter(Boolean).join(" ") || undefined;
+  const hijo = Children.only(children);
+  const esDirecto = typeof hijo.type === "string" && CONTROLES.includes(hijo.type);
+  const control = esDirecto
+    ? cloneElement(hijo, { id, "aria-describedby": desc, "aria-invalid": error ? true : undefined })
+    : hijo;
+  return (
+    <div className="mb-3">
+      <label htmlFor={id} className="form-label">{label}</label>
+      {control}
+      {hint && !error && <div id={`${id}-hint`} className="form-text">{hint}</div>}
+      {error && <div id={`${id}-err`} className="text-danger small mt-1" role="alert">{error}</div>}
+    </div>
+  );
+}
+
+// Badge de estado: punto + texto (nunca solo color).
+export function EstadoBadge({ estado }) {
+  const etiqueta = estado === "finalizada" ? "Finalizada" : "Pendiente";
+  return <span className={`badge-estado badge-${estado}`}>{etiqueta}</span>;
+}
+</file>
+
+<file path="vcm-psicolaboral/src/components/toast.js">
+import { createContext, useContext } from "react";
+
+export const ToastContext = createContext(null);
+
+export function useToast() {
+  const ctx = useContext(ToastContext);
+  if (!ctx) throw new Error("useToast debe usarse dentro de <ToastProvider>.");
+  return ctx;
+}
+</file>
+
+<file path="vcm-psicolaboral/src/data/seed.js">
+// Datos iniciales de demostración (ficticios, solo desarrollo).
+// Roles extensibles: agregar un rol nuevo es añadirlo a ROLES + matriz de permisos.
+// No existe rol administrador: duda pendiente del documento base (docs/, § "Dudas").
+
+export const ROLES = {
+  ANALISTA: "analista",
+  EVALUADOR: "evaluador",
+};
+
+export const ESTADOS = ["pendiente", "finalizada"];
+
+// Contraseñas de desarrollo (ver README). Aquí solo el hash SHA-256.
+export const USUARIOS = [
+  {
+    id: "u-ana",
+    nombre: "Ana Karina Paredes",
+    email: "analista@aquachile.test",
+    passHash:
+      "a8f3857819e30064eddcd74e3385bf8997e746dc9578cf7fd4cc0bfc9dd1028b",
+    rol: ROLES.ANALISTA,
+    cargo: "Analista de Reclutamiento",
+  },
+  {
+    id: "u-eva",
+    nombre: "Camila Soto Mella",
+    email: "evaluador@aquachile.test",
+    passHash:
+      "7af7fda3d1e211162512335eeaeab64c5f84d730323880ac575aa9d9319fa26d",
+    rol: ROLES.EVALUADOR,
+    cargo: "Profesional Evaluador",
+  },
+];
+
+export const CANDIDATOS = [
+  { id: "c1", nombre: "Matías Ignacio Almonacid Ruiz", rut: "16.482.910-3", correo: "matias.almonacid.v@gmail.com", telefono: "+56984129942", fechaRegistro: "2026-09-28", creadoPor: "u-ana" },
+  { id: "c2", nombre: "Valentina Barrientos Cárdenas", rut: "18.291.405-3", correo: "v.barrientos.c@gmail.com", telefono: "+56976451209", fechaRegistro: "2026-09-29", creadoPor: "u-ana" },
+  { id: "c3", nombre: "Cristián Eduardo Oyarzún Vargas", rut: "15.482.144-9", correo: "cristian.oyarzun.v@gmail.com", telefono: "+56982347710", fechaRegistro: "2026-09-30", creadoPor: "u-ana" },
+  { id: "c4", nombre: "Francisca Silva González", rut: "19.104.772-9", correo: "francisca.silva.g@gmail.com", telefono: "+56991238475", fechaRegistro: "2026-09-12", creadoPor: "u-ana" },
+  { id: "c5", nombre: "Rodrigo Andrés Cárdenas Muñoz", rut: "14.930.551-3", correo: "rodrigo.cardenas.m@gmail.com", telefono: "+56965873214", fechaRegistro: "2026-10-01", creadoPor: "u-ana" },
+  { id: "c6", nombre: "Carolina Mansilla Soto", rut: "17.654.321-3", correo: "carolina.mansilla.s@gmail.com", telefono: "+56977451923", fechaRegistro: "2026-09-10", creadoPor: "u-ana" },
+  { id: "c7", nombre: "Gonzalo Vera Gallardo", rut: "16.112.890-2", correo: "gonzalo.vera.g@gmail.com", telefono: "+56969028347", fechaRegistro: "2026-10-02", creadoPor: "u-ana" },
+];
+
+const h = (fecha, actor, accion, detalle) => ({ fecha, actor, accion, detalle });
+
+export const SOLICITUDES = [
+  {
+    id: "SOL-2026-001", candidatoId: "c1", puesto: "Jefe Centro Cultivo Mar",
+    fechaCreacion: "2026-09-28", creadaPor: "u-ana", evaluadorId: "u-eva",
+    evaluacion: { estado: "pendiente", fechaInicio: "2026-10-01", fechaEvaluacion: "", observaciones: "" },
+    historial: [
+      h("2026-09-28T10:15:00", "Ana Karina Paredes", "Solicitud creada", "Registro de candidato y solicitud de evaluación."),
+      h("2026-09-28T10:15:00", "Sistema", "Evaluación asignada", "Asignada a Camila Soto Mella."),
+      h("2026-10-01T09:00:00", "Camila Soto Mella", "Evaluación iniciada", "Fecha de inicio registrada."),
+    ],
+  },
+  {
+    id: "SOL-2026-002", candidatoId: "c2", puesto: "Supervisora Calidad Planta",
+    fechaCreacion: "2026-09-29", creadaPor: "u-ana", evaluadorId: "u-eva",
+    evaluacion: { estado: "pendiente", fechaInicio: "", fechaEvaluacion: "", observaciones: "" },
+    historial: [
+      h("2026-09-29T11:40:00", "Ana Karina Paredes", "Solicitud creada", "Registro de candidato y solicitud de evaluación."),
+      h("2026-09-29T11:40:00", "Sistema", "Evaluación asignada", "Asignada a Camila Soto Mella."),
+    ],
+  },
+  {
+    id: "SOL-2026-003", candidatoId: "c3", puesto: "Técnico Mantención Frigorífico",
+    fechaCreacion: "2026-09-30", creadaPor: "u-ana", evaluadorId: "u-eva",
+    evaluacion: { estado: "pendiente", fechaInicio: "2026-10-02", fechaEvaluacion: "", observaciones: "" },
+    historial: [
+      h("2026-09-30T15:05:00", "Ana Karina Paredes", "Solicitud creada", "Registro de candidato y solicitud de evaluación."),
+      h("2026-09-30T15:05:00", "Sistema", "Evaluación asignada", "Asignada a Camila Soto Mella."),
+      h("2026-10-02T08:30:00", "Camila Soto Mella", "Evaluación iniciada", "Fecha de inicio registrada."),
+    ],
+  },
+  {
+    id: "SOL-2026-004", candidatoId: "c4", puesto: "Analista Datos Biomasa",
+    fechaCreacion: "2026-09-12", creadaPor: "u-ana", evaluadorId: "u-eva",
+    evaluacion: { estado: "finalizada", fechaInicio: "2026-09-15", fechaEvaluacion: "2026-09-20", observaciones: "Perfil recomendado para el cargo. Buena tolerancia al trabajo bajo presión y adherencia a protocolos de calidad." },
+    historial: [
+      h("2026-09-12T09:20:00", "Ana Karina Paredes", "Solicitud creada", "Registro de candidato y solicitud de evaluación."),
+      h("2026-09-12T09:20:00", "Sistema", "Evaluación asignada", "Asignada a Camila Soto Mella."),
+      h("2026-09-15T09:00:00", "Camila Soto Mella", "Evaluación iniciada", "Fecha de inicio registrada."),
+      h("2026-09-20T16:45:00", "Camila Soto Mella", "Estado cambiado a finalizada", "Evaluación completada con observaciones."),
+    ],
+  },
+  {
+    id: "SOL-2026-005", candidatoId: "c5", puesto: "Patrón de Nave Mayor",
+    fechaCreacion: "2026-10-01", creadaPor: "u-ana", evaluadorId: "u-eva",
+    evaluacion: { estado: "pendiente", fechaInicio: "", fechaEvaluacion: "", observaciones: "" },
+    historial: [
+      h("2026-10-01T12:10:00", "Ana Karina Paredes", "Solicitud creada", "Registro de candidato y solicitud de evaluación."),
+      h("2026-10-01T12:10:00", "Sistema", "Evaluación asignada", "Asignada a Camila Soto Mella."),
+    ],
+  },
+  {
+    id: "SOL-2026-006", candidatoId: "c6", puesto: "Médico Veterinario Salud Peces",
+    fechaCreacion: "2026-09-10", creadaPor: "u-ana", evaluadorId: "u-eva",
+    evaluacion: { estado: "finalizada", fechaInicio: "2026-09-11", fechaEvaluacion: "2026-09-18", observaciones: "Perfil apto con observaciones menores: reforzar inducción en protocolos de bioseguridad antes del ingreso a centro." },
+    historial: [
+      h("2026-09-10T08:50:00", "Ana Karina Paredes", "Solicitud creada", "Registro de candidato y solicitud de evaluación."),
+      h("2026-09-10T08:50:00", "Sistema", "Evaluación asignada", "Asignada a Camila Soto Mella."),
+      h("2026-09-11T09:00:00", "Camila Soto Mella", "Evaluación iniciada", "Fecha de inicio registrada."),
+      h("2026-09-18T17:20:00", "Camila Soto Mella", "Estado cambiado a finalizada", "Evaluación completada con observaciones."),
+    ],
+  },
+  {
+    id: "SOL-2026-007", candidatoId: "c7", puesto: "Técnico Electromecánico Pontón",
+    fechaCreacion: "2026-10-02", creadaPor: "u-ana", evaluadorId: "u-eva",
+    evaluacion: { estado: "pendiente", fechaInicio: "", fechaEvaluacion: "", observaciones: "" },
+    historial: [
+      h("2026-10-02T14:30:00", "Ana Karina Paredes", "Solicitud creada", "Registro de candidato y solicitud de evaluación."),
+      h("2026-10-02T14:30:00", "Sistema", "Evaluación asignada", "Asignada a Camila Soto Mella."),
+    ],
+  },
+];
+
+export const ESTADO_INICIAL = {
+  usuarios: USUARIOS,
+  candidatos: CANDIDATOS,
+  solicitudes: SOLICITUDES,
+};
+</file>
+
+<file path="vcm-psicolaboral/src/layouts/AppLayout.jsx">
+import { useState } from "react";
+import { Outlet } from "react-router-dom";
+import AppSidebar from "../components/AppSidebar";
+import { useAuth } from "../auth/useAuth";
+
+// Shell autenticado: sidebar + contenido. El menú móvil lo controla React.
+export default function AppLayout() {
+  const [abierto, setAbierto] = useState(false);
+  const { usuario } = useAuth();
+  const cerrar = () => setAbierto(false);
+
+  return (
+    <div className="app-shell">
+      <a href="#contenido" className="skip-link">Saltar al contenido</a>
+      <AppSidebar abierto={abierto} onNavegar={cerrar} />
+      {abierto && (
+        <div className="sidebar-scrim d-md-none" onClick={cerrar} aria-hidden="true" />
+      )}
+      <div className="app-main">
+        <header className="app-topbar">
+          <button
+            type="button"
+            className="btn btn-outline-secondary btn-sm d-md-none"
+            aria-expanded={abierto}
+            aria-controls="menuPrincipal"
+            aria-label={abierto ? "Cerrar menú" : "Abrir menú"}
+            onClick={() => setAbierto(!abierto)}
+          >
+            ☰
+          </button>
+          <span className="ms-auto small text-secondary">
+            {usuario?.nombre} · {usuario?.cargo}
+          </span>
+        </header>
+        <main id="contenido" className="app-content" tabIndex={-1}>
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/lib/crypto.js">
+// SHA-256 con WebCrypto. Las contraseñas nunca se guardan ni comparan
+// en texto plano: solo se almacena y coteja el hash hexadecimal.
+export async function sha256Hex(texto) {
+  const bytes = new TextEncoder().encode(String(texto));
+  const hash = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(hash)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+</file>
+
+<file path="vcm-psicolaboral/src/lib/fechas.js">
+export const fechaCorta = (iso) => {
+  if (!iso) return "—";
+  const d = new Date(String(iso).length <= 10 ? `${iso}T00:00` : iso);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("es-CL");
+};
+
+export const fechaHora = (iso) => {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? "—"
+    : `${d.toLocaleDateString("es-CL")} ${d.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}`;
+};
+</file>
+
+<file path="vcm-psicolaboral/src/pages/app/Dashboard.jsx">
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../auth/useAuth";
+import { listarSolicitudes } from "../../services/solicitudesService";
+import { ROLES } from "../../data/seed";
+import { Cargando, EmptyState, ErrorCarga, Timeline } from "../../components/feedback";
+import { EstadoBadge } from "../../components/forms";
+import { fechaCorta } from "../../lib/fechas";
+import StatCard from "../../components/StatCard";
+
+export default function Dashboard() {
+  const { usuario } = useAuth();
+  const [datos, setDatos] = useState(null);
+  const [error, setError] = useState(null);
+  const [intento, setIntento] = useState(0);
+  const esAnalista = usuario.rol === ROLES.ANALISTA;
+
+  useEffect(() => {
+    listarSolicitudes(usuario)
+      .then(setDatos)
+      .catch((e) => setError(e.message));
+  }, [usuario, intento]);
+
+  const cargar = () => {
+    setDatos(null);
+    setError(null);
+    setIntento((n) => n + 1);
+  };
+
+  if (error) return <ErrorCarga texto={error} onReintentar={cargar} />;
+  if (!datos) return <Cargando texto="Cargando resumen…" />;
+
+  const pendientes = datos.filter((s) => s.evaluacion.estado === "pendiente");
+  const finalizadas = datos.filter((s) => s.evaluacion.estado === "finalizada");
+  const recientes = datos.slice(0, 5);
+
+  return (
+    <>
+      <section className="page-head">
+        <h1>{esAnalista ? "Reclutamiento" : "Mis evaluaciones"}</h1>
+        <p>
+          {esAnalista
+            ? "Resumen del proceso de reclutamiento y evaluación psicolaboral."
+            : "Solicitudes de evaluación psicolaboral asignadas a ti."}
+        </p>
+      </section>
+
+      <section className="row g-3 mb-4" aria-label="Indicadores">
+        <StatCard value={datos.length} label="Solicitudes registradas" />
+        <StatCard value={pendientes.length} label="Evaluaciones pendientes" />
+        <StatCard value={finalizadas.length} label="Evaluaciones finalizadas" />
+        <StatCard value={pendientes.filter((s) => s.evaluacion.fechaInicio).length} label="En curso" />
+      </section>
+
+      <section className="row g-3">
+        <div className="col-lg-7">
+          <div className="card">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h2 className="h5 mb-0">Solicitudes recientes</h2>
+                <Link to="/app/solicitudes" className="small">Ver todas</Link>
+              </div>
+              {recientes.length === 0 ? (
+                <EmptyState titulo="Todavía no existen solicitudes registradas." texto="Cuando se registre un candidato, aparecerá aquí." />
+              ) : (
+                <ul className="list-unstyled mb-0 d-grid gap-2">
+                  {recientes.map((s) => (
+                    <li key={s.id} className="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                      <span>
+                        <Link to={`/app/solicitudes/${s.id}`} className="fw-semibold mono small">{s.id}</Link>
+                        <br />
+                        <span className="small text-secondary">{s.candidato.nombre} · {s.puesto}</span>
+                      </span>
+                      <EstadoBadge estado={s.evaluacion.estado} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="col-lg-5">
+          <div className="card">
+            <div className="card-body">
+              <h2 className="h5">Acciones</h2>
+              {esAnalista ? (
+                <div className="d-grid gap-2">
+                  <Link to="/app/solicitudes/nueva" className="btn btn-primary">Registrar candidato</Link>
+                  <Link to="/app/solicitudes" className="btn btn-outline-primary">Consultar solicitudes</Link>
+                </div>
+              ) : (
+                <div className="d-grid gap-2">
+                  <Link to="/app/solicitudes" className="btn btn-primary">Ver solicitudes asignadas</Link>
+                </div>
+              )}
+              {recientes[0] && (
+                <>
+                  <h3 className="h6 mt-4">Último movimiento</h3>
+                  <Timeline eventos={recientes[0].historial.slice(-1)} />
+                </>
+              )}
+              <p className="small text-secondary mt-3 mb-0">
+                Pendientes sin iniciar: {pendientes.filter((s) => !s.evaluacion.fechaInicio).length} ·
+                Última actualización: {recientes[0] ? fechaCorta(recientes[0].historial.at(-1)?.fecha) : "—"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/pages/app/EvaluacionPage.jsx">
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useAuth } from "../../auth/useAuth";
+import { cambiarEstado, obtenerSolicitud, registrarEvaluacion } from "../../services/solicitudesService";
+import { Breadcrumbs, Cargando, ConfirmDialog, ErrorCarga, Timeline } from "../../components/feedback";
+import { useToast } from "../../components/toast";
+import { Campo, EstadoBadge } from "../../components/forms";
+
+const schema = z.object({
+  fechaInicio: z.string().optional(),
+  fechaEvaluacion: z.string().optional(),
+  observaciones: z.string().max(1000, "Máximo 1000 caracteres").optional(),
+});
+
+export default function EvaluacionPage() {
+  const { id } = useParams();
+  const { usuario } = useAuth();
+  const { avisar } = useToast();
+  const [s, setS] = useState(null);
+  const [error, setError] = useState(null);
+  const [errorEnvio, setErrorEnvio] = useState(null);
+  const [confirmar, setConfirmar] = useState(null); // "finalizada" | "pendiente" | null
+  const [intento, setIntento] = useState(0);
+
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+    resolver: zodResolver(schema),
+  });
+
+  useEffect(() => {
+    obtenerSolicitud(usuario, id)
+      .then((sol) => {
+        setS(sol);
+        reset({
+          fechaInicio: sol.evaluacion.fechaInicio || "",
+          fechaEvaluacion: sol.evaluacion.fechaEvaluacion || "",
+          observaciones: sol.evaluacion.observaciones || "",
+        });
+      })
+      .catch((e) => setError(e.message));
+  }, [usuario, id, intento, reset]);
+
+  const cargar = () => {
+    setS(null);
+    setError(null);
+    setIntento((n) => n + 1);
+  };
+
+  const onGuardar = async (datos) => {
+    setErrorEnvio(null);
+    if (datos.fechaInicio && datos.fechaEvaluacion && datos.fechaEvaluacion < datos.fechaInicio) {
+      setErrorEnvio("La fecha de evaluación no puede ser anterior a la fecha de inicio.");
+      return;
+    }
+    try {
+      const actualizada = await registrarEvaluacion(usuario, id, datos);
+      setS(actualizada);
+      avisar("Evaluación guardada.");
+    } catch (e) {
+      setErrorEnvio(e.message);
+    }
+  };
+
+  const onCambiarEstado = async () => {
+    setErrorEnvio(null);
+    try {
+      const actualizada = await cambiarEstado(usuario, id, confirmar);
+      setS(actualizada);
+      avisar(confirmar === "finalizada" ? "Evaluación finalizada." : "Evaluación reabierta.");
+    } catch (e) {
+      setErrorEnvio(e.message);
+    } finally {
+      setConfirmar(null);
+    }
+  };
+
+  if (error) return (
+    <>
+      <Breadcrumbs items={[{ to: "/app", label: "Inicio" }, { to: "/app/solicitudes", label: "Solicitudes" }, { label: id }]} />
+      <ErrorCarga texto={error} onReintentar={cargar} />
+    </>
+  );
+  if (!s) return <Cargando texto="Cargando evaluación…" />;
+
+  const finalizada = s.evaluacion.estado === "finalizada";
+
+  return (
+    <>
+      <Breadcrumbs items={[
+        { to: "/app", label: "Inicio" },
+        { to: "/app/solicitudes", label: "Solicitudes" },
+        { to: `/app/solicitudes/${s.id}`, label: s.id },
+        { label: "Evaluación" },
+      ]} />
+      <section className="page-head d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div>
+          <h1>Evaluación psicolaboral</h1>
+          <p className="mb-0">{s.candidato.nombre} · <strong>{s.puesto}</strong> · <span className="mono small">{s.candidato.rut}</span></p>
+        </div>
+        <EstadoBadge estado={s.evaluacion.estado} />
+      </section>
+
+      {errorEnvio && <div className="alert alert-danger" role="alert">{errorEnvio}</div>}
+
+      <section className="row g-3">
+        <div className="col-lg-7">
+          <form onSubmit={handleSubmit(onGuardar)} noValidate>
+            <div className="card mb-3">
+              <div className="card-body">
+                <h2 className="h5">Registro de la evaluación</h2>
+                <div className="row">
+                  <div className="col-md-6">
+                    <Campo id="fechaInicio" label="Fecha de inicio" error={errors.fechaInicio?.message}>
+                      <input type="date" className="form-control" {...register("fechaInicio")} />
+                    </Campo>
+                  </div>
+                  <div className="col-md-6">
+                    <Campo id="fechaEvaluacion" label="Fecha de evaluación" error={errors.fechaEvaluacion?.message}>
+                      <input type="date" className="form-control" {...register("fechaEvaluacion")} />
+                    </Campo>
+                  </div>
+                </div>
+                <Campo id="observaciones" label="Observaciones" error={errors.observaciones?.message}>
+                  <textarea rows="4" className="form-control" {...register("observaciones")} />
+                </Campo>
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting} aria-busy={isSubmitting}>
+                  {isSubmitting ? "Guardando…" : "Guardar cambios"}
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <div className="card">
+            <div className="card-body">
+              <h2 className="h5">Estado de la solicitud</h2>
+              <p className="text-secondary small">Cambiar el estado queda registrado en la trazabilidad.</p>
+              {finalizada ? (
+                <button type="button" className="btn btn-outline-primary" onClick={() => setConfirmar("pendiente")}>
+                  Reabrir evaluación
+                </button>
+              ) : (
+                <button type="button" className="btn btn-primary" onClick={() => setConfirmar("finalizada")}>
+                  Marcar como finalizada
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="col-lg-5">
+          <div className="card">
+            <div className="card-body">
+              <h2 className="h5">Trazabilidad</h2>
+              <Timeline eventos={s.historial} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <ConfirmDialog
+        abierto={confirmar !== null}
+        titulo={confirmar === "finalizada" ? "Finalizar evaluación" : "Reabrir evaluación"}
+        texto={confirmar === "finalizada"
+          ? `Se marcará la solicitud ${s.id} como finalizada. Esta acción queda registrada.`
+          : `La solicitud ${s.id} volverá a estado pendiente.`}
+        etiquetaConfirmar={confirmar === "finalizada" ? "Finalizar" : "Reabrir"}
+        onConfirmar={onCambiarEstado}
+        onCerrar={() => setConfirmar(null)}
+      />
+    </>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/pages/app/NuevaSolicitudPage.jsx">
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useAuth } from "../../auth/useAuth";
+import { crearSolicitud } from "../../services/solicitudesService";
+import { validarRut } from "../../lib/rut";
+import { ofertas } from "../../data/ofertas";
+import { Breadcrumbs } from "../../components/feedback";
+import { useToast } from "../../components/toast";
+import { Campo } from "../../components/forms";
+
+const schema = z.object({
+  nombre: z.string().min(3, "Ingresa el nombre completo"),
+  rut: z.string().refine(validarRut, "RUT inválido"),
+  correo: z.string().email("Correo inválido"),
+  telefono: z.string().regex(/^\+?\d{8,12}$/, "Teléfono inválido (solo números, ej. +56912345678)"),
+  puesto: z.string().min(3, "Indica el puesto al que postula"),
+});
+
+export default function NuevaSolicitudPage() {
+  const { usuario } = useAuth();
+  const { avisar } = useToast();
+  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+    resolver: zodResolver(schema),
+  });
+
+  const onSubmit = async (datos) => {
+    setError(null);
+    try {
+      const s = await crearSolicitud(usuario, datos);
+      avisar(`Candidato registrado. Solicitud ${s.id} creada.`);
+      navigate(`/app/solicitudes/${s.id}`);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  return (
+    <>
+      <Breadcrumbs items={[{ to: "/app", label: "Inicio" }, { to: "/app/solicitudes", label: "Solicitudes" }, { label: "Nueva" }]} />
+      <section className="page-head">
+        <h1>Registrar candidato</h1>
+        <p>Ingresa la información personal y el puesto. Al guardar se crea la solicitud de evaluación.</p>
+      </section>
+
+      <div className="col-lg-7">
+        {error && <div className="alert alert-danger" role="alert">{error}</div>}
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <div className="card mb-3">
+            <div className="card-body">
+              <h2 className="h5">Información personal</h2>
+              <Campo id="nombre" label="Nombre completo *" error={errors.nombre?.message}>
+                <input className="form-control" autoComplete="name" {...register("nombre")} />
+              </Campo>
+              <Campo id="rut" label="RUT *" error={errors.rut?.message}>
+                <input className="form-control mono" placeholder="12.345.678-5" {...register("rut")} />
+              </Campo>
+              <div className="row">
+                <div className="col-md-6">
+                  <Campo id="correo" label="Correo electrónico *" error={errors.correo?.message}>
+                    <input type="email" className="form-control" autoComplete="email" {...register("correo")} />
+                  </Campo>
+                </div>
+                <div className="col-md-6">
+                  <Campo id="telefono" label="Teléfono *" error={errors.telefono?.message}>
+                    <input className="form-control mono" placeholder="+56912345678" {...register("telefono")} />
+                  </Campo>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card mb-3">
+            <div className="card-body">
+              <h2 className="h5">Postulación</h2>
+              <Campo id="puesto" label="Puesto al que postula *" error={errors.puesto?.message}>
+                <input className="form-control" list="puestos" {...register("puesto")} />
+              </Campo>
+              <datalist id="puestos">
+                {[...new Set(ofertas.map((o) => o.cargo))].map((p) => <option key={p} value={p} />)}
+              </datalist>
+            </div>
+          </div>
+
+          <div className="d-flex gap-2">
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting} aria-busy={isSubmitting}>
+              {isSubmitting ? "Registrando…" : "Registrar candidato"}
+            </button>
+            <Link to="/app/solicitudes" className="btn btn-outline-secondary">Cancelar</Link>
+          </div>
+        </form>
+      </div>
+    </>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/pages/app/OfertasAdminPage.jsx">
+import { useEffect, useState } from "react";
+import { getOfertasAdmin } from "../../services/ofertasService";
+import { Breadcrumbs } from "../../components/feedback";
+
+// Solo lectura y solo Analista (ver App.jsx): referencia del catálogo de
+// cargos para el proceso de reclutamiento. Sin crear/editar: fuera del MVP.
+const colores = { abierta: "success", cerrada: "secondary", borrador: "warning" };
+
+export default function OfertasAdminPage() {
+  const [ofertas, setOfertas] = useState([]);
+
+  useEffect(() => {
+    getOfertasAdmin().then(setOfertas);
+  }, []);
+
+  return (
+    <>
+      <Breadcrumbs items={[{ to: "/app", label: "Inicio" }, { label: "Ofertas" }]} />
+      <section className="page-head">
+        <h1>Ofertas</h1>
+        <p>Catálogo de cargos publicado en el sitio público. Solo consulta.</p>
+      </section>
+      <div className="table-responsive">
+        <table className="table table-hover table-cards bg-white">
+          <thead>
+            <tr>
+              <th scope="col">Cargo</th>
+              <th scope="col">Familia</th>
+              <th scope="col">Ubicación</th>
+              <th scope="col">Unidad</th>
+              <th scope="col">Vacantes</th>
+              <th scope="col">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ofertas.map((o) => (
+              <tr key={o.id}>
+                <td data-label="Cargo">{o.cargo}</td>
+                <td data-label="Familia">{o.familiaCargo}</td>
+                <td data-label="Ubicación">{o.ubicacion}</td>
+                <td data-label="Unidad">{o.unidad ?? "—"}</td>
+                <td data-label="Vacantes">{o.vacantes}</td>
+                <td data-label="Estado"><span className={`badge text-bg-${colores[o.estado]}`}>{o.estado}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/pages/app/SolicitudDetallePage.jsx">
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { useAuth } from "../../auth/useAuth";
+import { obtenerSolicitud } from "../../services/solicitudesService";
+import { ROLES } from "../../data/seed";
+import { Breadcrumbs, Cargando, ErrorCarga, Timeline } from "../../components/feedback";
+import { EstadoBadge } from "../../components/forms";
+import { fechaCorta } from "../../lib/fechas";
+
+function Dato({ etiqueta, valor, mono }) {
+  return (
+    <div className="mb-2">
+      <div className="small text-secondary">{etiqueta}</div>
+      <div className={mono ? "mono" : undefined}>{valor}</div>
+    </div>
+  );
+}
+
+export default function SolicitudDetallePage() {
+  const { id } = useParams();
+  const { usuario } = useAuth();
+  const [s, setS] = useState(null);
+  const [error, setError] = useState(null);
+  const [intento, setIntento] = useState(0);
+  const esAnalista = usuario.rol === ROLES.ANALISTA;
+
+  useEffect(() => {
+    obtenerSolicitud(usuario, id).then(setS).catch((e) => setError(e.message));
+  }, [usuario, id, intento]);
+
+  const cargar = () => {
+    setS(null);
+    setError(null);
+    setIntento((n) => n + 1);
+  };
+
+  if (error) return (
+    <>
+      <Breadcrumbs items={[{ to: "/app", label: "Inicio" }, { to: "/app/solicitudes", label: "Solicitudes" }, { label: id }]} />
+      <ErrorCarga texto={error} onReintentar={cargar} />
+    </>
+  );
+  if (!s) return <Cargando texto="Cargando solicitud…" />;
+
+  return (
+    <>
+      <Breadcrumbs items={[{ to: "/app", label: "Inicio" }, { to: "/app/solicitudes", label: "Solicitudes" }, { label: s.id }]} />
+      <section className="page-head d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div>
+          <h1>{s.candidato.nombre}</h1>
+          <p className="mono small mb-1">{s.id} · registrado el {fechaCorta(s.fechaCreacion)}</p>
+          <p className="mb-0"><strong>{s.puesto}</strong> · <span className="text-secondary">Evaluador: {s.evaluadorNombre}</span></p>
+        </div>
+        <EstadoBadge estado={s.evaluacion.estado} />
+      </section>
+
+      <section className="row g-3">
+        <div className="col-lg-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <h2 className="h5">Candidato</h2>
+              <Dato etiqueta="RUT" valor={s.candidato.rut} mono />
+              <Dato etiqueta="Correo" valor={s.candidato.correo} />
+              <Dato etiqueta="Teléfono" valor={s.candidato.telefono} mono />
+              <Dato etiqueta="Registrado por" valor={s.creadoPorNombre} />
+            </div>
+          </div>
+        </div>
+        <div className="col-lg-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <h2 className="h5">Evaluación psicolaboral</h2>
+              <Dato etiqueta="Inicio" valor={s.evaluacion.fechaInicio ? fechaCorta(s.evaluacion.fechaInicio) : "Sin registrar"} mono />
+              <Dato etiqueta="Fecha de evaluación" valor={s.evaluacion.fechaEvaluacion ? fechaCorta(s.evaluacion.fechaEvaluacion) : "Sin registrar"} mono />
+              <Dato etiqueta="Observaciones" valor={s.evaluacion.observaciones || "Sin observaciones registradas"} />
+              {!esAnalista && (
+                <Link to={`/app/solicitudes/${s.id}/evaluacion`} className="btn btn-primary btn-sm mt-2">
+                  Registrar evaluación
+                </Link>
+              )}
+              {esAnalista && (
+                <p className="small text-secondary mt-2 mb-0">Solo el profesional evaluador puede modificar la evaluación.</p>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="col-lg-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <h2 className="h5">Trazabilidad</h2>
+              <Timeline eventos={s.historial} />
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/pages/app/SolicitudesPage.jsx">
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../auth/useAuth";
+import { listarSolicitudes } from "../../services/solicitudesService";
+import { ROLES } from "../../data/seed";
+import { Breadcrumbs, Cargando, EmptyState, ErrorCarga } from "../../components/feedback";
+import { EstadoBadge } from "../../components/forms";
+import { fechaCorta } from "../../lib/fechas";
+
+export default function SolicitudesPage() {
+  const { usuario } = useAuth();
+  const [lista, setLista] = useState(null);
+  const [error, setError] = useState(null);
+  const [texto, setTexto] = useState("");
+  const [estado, setEstado] = useState("");
+  const [intento, setIntento] = useState(0);
+  const esAnalista = usuario.rol === ROLES.ANALISTA;
+
+  useEffect(() => {
+    listarSolicitudes(usuario, { texto, estado })
+      .then(setLista)
+      .catch((e) => setError(e.message));
+  }, [usuario, texto, estado, intento]);
+
+  const cargar = () => {
+    setLista(null);
+    setError(null);
+    setIntento((n) => n + 1);
+  };
+
+  const hayFiltros = useMemo(() => texto !== "" || estado !== "", [texto, estado]);
+
+  return (
+    <>
+      <Breadcrumbs items={[{ to: "/app", label: "Inicio" }, { label: "Solicitudes" }]} />
+      <section className="page-head d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div>
+          <h1>Solicitudes</h1>
+          <p>{esAnalista ? "Candidatos registrados y estado de su evaluación." : "Evaluaciones asignadas a ti."}</p>
+        </div>
+        {esAnalista && <Link to="/app/solicitudes/nueva" className="btn btn-primary">Registrar candidato</Link>}
+      </section>
+
+      <section className="row g-2 mb-3" aria-label="Filtros">
+        <div className="col-12 col-md-6">
+          <label htmlFor="buscar" className="sr-only">Buscar solicitudes</label>
+          <input
+            id="buscar" className="form-control" placeholder="Buscar por nombre, RUT, puesto o folio…"
+            value={texto} onChange={(e) => setTexto(e.target.value)}
+          />
+        </div>
+        <div className="col-12 col-md-3">
+          <label htmlFor="filtro-estado" className="sr-only">Filtrar por estado</label>
+          <select id="filtro-estado" className="form-select" value={estado} onChange={(e) => setEstado(e.target.value)}>
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="finalizada">Finalizada</option>
+          </select>
+        </div>
+        <div className="col-12 col-md-3 d-flex align-items-center">
+          <p className="small text-secondary mb-0" role="status">
+            {lista ? `${lista.length} resultado${lista.length === 1 ? "" : "s"}` : "…"}
+          </p>
+        </div>
+      </section>
+
+      {error && <ErrorCarga texto={error} onReintentar={cargar} />}
+      {!error && !lista && <Cargando texto="Cargando solicitudes…" />}
+      {!error && lista && lista.length === 0 && !hayFiltros && (
+        <EmptyState
+          titulo="Todavía no existen solicitudes registradas."
+          texto={esAnalista ? "Registra el primer candidato para iniciar el proceso." : "Aún no tienes evaluaciones asignadas."}
+        >
+          {esAnalista && <Link to="/app/solicitudes/nueva" className="btn btn-primary">Registrar candidato</Link>}
+        </EmptyState>
+      )}
+      {!error && lista && lista.length === 0 && hayFiltros && (
+        <EmptyState titulo="Sin resultados" texto="Ninguna solicitud coincide con los filtros.">
+          <button type="button" className="btn btn-outline-primary" onClick={() => { setTexto(""); setEstado(""); }}>
+            Limpiar filtros
+          </button>
+        </EmptyState>
+      )}
+      {!error && lista && lista.length > 0 && (
+        <div className="table-responsive">
+          <table className="table table-hover table-cards bg-white">
+            <thead>
+              <tr>
+                <th scope="col">Solicitud</th>
+                <th scope="col">Candidato</th>
+                <th scope="col">Fecha registro</th>
+                <th scope="col">Estado</th>
+                <th scope="col"><span className="sr-only">Acciones</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {lista.map((s) => (
+                <tr key={s.id}>
+                  <td data-label="Solicitud">
+                    <span className="mono small d-block">{s.id}</span>
+                    <span className="small text-secondary">{s.puesto}</span>
+                  </td>
+                  <td data-label="Candidato">
+                    <span className="d-block">{s.candidato.nombre}</span>
+                    <span className="mono small text-secondary">{s.candidato.rut}</span>
+                  </td>
+                  <td data-label="Registro" className="mono small">{fechaCorta(s.fechaCreacion)}</td>
+                  <td data-label="Estado"><EstadoBadge estado={s.evaluacion.estado} /></td>
+                  <td className="no-label text-md-end">
+                    <Link to={`/app/solicitudes/${s.id}`} className="btn btn-outline-primary btn-sm me-1">Ver detalle</Link>
+                    {!esAnalista && (
+                      <Link to={`/app/solicitudes/${s.id}/evaluacion`} className="btn btn-primary btn-sm">Evaluar</Link>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/pages/public/ForbiddenPage.jsx">
+import { Link } from "react-router-dom";
+
+export default function ForbiddenPage() {
+  return (
+    <div className="col-lg-6">
+      <h1 className="h3">Sin permiso</h1>
+      <p className="text-secondary">
+        Tu rol no tiene acceso a esta sección. Si necesitas acceso, contacta al
+        equipo de reclutamiento.
+      </p>
+      <Link to="/app" className="btn btn-primary">Volver al inicio</Link>
+    </div>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/services/authService.js">
+// Autenticación (mock persistente). El backend real debe reemplazar este
+// módulo manteniendo la misma interfaz: login, sesionActual, logout.
+import { sha256Hex } from "../lib/crypto";
+import { cargar, demora, CLAVE_SESION } from "./store";
+import { ESTADO_INICIAL } from "../data/seed";
+
+const sinSecreto = (u) => {
+  const seguro = { ...u };
+  delete seguro.passHash;
+  return seguro;
+};
+
+export async function login(email, password) {
+  await demora(600);
+  const correo = String(email || "").trim().toLowerCase();
+  const estado = cargar(ESTADO_INICIAL);
+  const usuario = estado.usuarios.find((u) => u.email.toLowerCase() === correo);
+  const hash = await sha256Hex(password || "");
+  if (!usuario || usuario.passHash !== hash) {
+    throw new Error("Correo o contraseña incorrectos.");
+  }
+  sessionStorage.setItem(
+    CLAVE_SESION,
+    JSON.stringify({ userId: usuario.id, inicio: new Date().toISOString() })
+  );
+  return sinSecreto(usuario);
+}
+
+export function sesionActual() {
+  try {
+    const crudo = sessionStorage.getItem(CLAVE_SESION);
+    if (!crudo) return null;
+    const { userId } = JSON.parse(crudo);
+    const estado = cargar(ESTADO_INICIAL);
+    const usuario = estado.usuarios.find((u) => u.id === userId);
+    return usuario ? sinSecreto(usuario) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function logout() {
+  sessionStorage.removeItem(CLAVE_SESION);
+}
+</file>
+
+<file path="vcm-psicolaboral/src/services/solicitudesService.js">
+// Solicitudes y evaluaciones. Los permisos se verifican aquí (lógica de
+// aplicación), no solo ocultando botones: cada función recibe el actor y
+// lanza si el rol no está autorizado.
+import { cargar, guardar, demora } from "./store";
+import { ESTADO_INICIAL, ROLES, ESTADOS } from "../data/seed";
+import { limpiarRut } from "../lib/rut";
+
+function exigirRol(actor, roles, accion = "realizar esta acción") {
+  if (!actor || !roles.includes(actor.rol)) {
+    throw new Error(`No tienes permiso para ${accion}.`);
+  }
+}
+
+const porId = (lista, id) => lista.find((x) => x.id === id);
+const unir = (estado, s) => ({
+  ...s,
+  candidato: porId(estado.candidatos, s.candidatoId),
+  creadoPorNombre: porId(estado.usuarios, s.creadaPor)?.nombre ?? "—",
+  evaluadorNombre: porId(estado.usuarios, s.evaluadorId)?.nombre ?? "Sin asignar",
+});
+
+function visiblePara(actor, solicitud) {
+  if (actor.rol === ROLES.ANALISTA) return true;
+  return solicitud.evaluadorId === actor.id;
+}
+
+function registrar(estado, solicitud, actor, accion, detalle) {
+  solicitud.historial = [
+    ...(solicitud.historial || []),
+    {
+      fecha: new Date().toISOString(),
+      actor: actor.nombre,
+      accion,
+      detalle,
+    },
+  ];
+  guardar(estado);
+}
+
+export async function listarSolicitudes(actor, { texto = "", estado = "" } = {}) {
+  exigirRol(actor, [ROLES.ANALISTA, ROLES.EVALUADOR], "consultar solicitudes");
+  await demora();
+  const datos = cargar(ESTADO_INICIAL);
+  const q = texto.trim().toLowerCase();
+  return datos.solicitudes
+    .filter((s) => visiblePara(actor, s))
+    .map((s) => unir(datos, s))
+    .filter(
+      (s) =>
+        (!estado || s.evaluacion.estado === estado) &&
+        (!q ||
+          s.id.toLowerCase().includes(q) ||
+          s.puesto.toLowerCase().includes(q) ||
+          s.candidato.nombre.toLowerCase().includes(q) ||
+          limpiarRut(s.candidato.rut).includes(limpiarRut(q)))
+    )
+    .sort((a, b) => (a.fechaCreacion < b.fechaCreacion ? 1 : -1));
+}
+
+export async function obtenerSolicitud(actor, id) {
+  exigirRol(actor, [ROLES.ANALISTA, ROLES.EVALUADOR], "consultar solicitudes");
+  await demora();
+  const datos = cargar(ESTADO_INICIAL);
+  const s = porId(datos.solicitudes, id);
+  if (!s || !visiblePara(actor, s)) throw new Error("Solicitud no encontrada.");
+  return unir(datos, s);
+}
+
+// Crea candidato + solicitud en una sola operación (interfaz única del MVP).
+export async function crearSolicitud(actor, { nombre, rut, correo, telefono, puesto }) {
+  exigirRol(actor, [ROLES.ANALISTA], "registrar candidatos");
+  await demora(600);
+  const datos = cargar(ESTADO_INICIAL);
+  const rutLimpio = limpiarRut(rut);
+  if (datos.candidatos.some((c) => limpiarRut(c.rut) === rutLimpio)) {
+    throw new Error("Este RUT ya tiene una solicitud registrada.");
+  }
+  const evaluador = datos.usuarios.find((u) => u.rol === ROLES.EVALUADOR);
+  const num = Math.max(0, ...datos.solicitudes.map((s) => Number(s.id.split("-").pop()))) + 1;
+  const id = `SOL-2026-${String(num).padStart(3, "0")}`;
+  const hoy = new Date().toISOString().slice(0, 10);
+  const candidatoId = `c-${Date.now()}`;
+  datos.candidatos.push({
+    id: candidatoId,
+    nombre: nombre.trim(),
+    rut: rut.trim(),
+    correo: correo.trim(),
+    telefono: telefono.trim(),
+    fechaRegistro: hoy,
+    creadoPor: actor.id,
+  });
+  const solicitud = {
+    id,
+    candidatoId,
+    puesto: puesto.trim(),
+    fechaCreacion: hoy,
+    creadaPor: actor.id,
+    evaluadorId: evaluador ? evaluador.id : null,
+    evaluacion: { estado: "pendiente", fechaInicio: "", fechaEvaluacion: "", observaciones: "" },
+    historial: [],
+  };
+  datos.solicitudes.push(solicitud);
+  registrar(datos, solicitud, actor, "Solicitud creada", "Registro de candidato y solicitud de evaluación.");
+  if (evaluador) {
+    registrar(datos, solicitud, { nombre: "Sistema" }, "Evaluación asignada", `Asignada a ${evaluador.nombre}.`);
+  }
+  return unir(datos, solicitud);
+}
+
+export async function registrarEvaluacion(actor, id, { fechaInicio, fechaEvaluacion, observaciones }) {
+  exigirRol(actor, [ROLES.EVALUADOR], "registrar evaluaciones");
+  await demora(600);
+  const datos = cargar(ESTADO_INICIAL);
+  const s = porId(datos.solicitudes, id);
+  if (!s || !visiblePara(actor, s)) throw new Error("Solicitud no encontrada.");
+  const antes = s.evaluacion.fechaInicio;
+  s.evaluacion = {
+    ...s.evaluacion,
+    fechaInicio: fechaInicio || "",
+    fechaEvaluacion: fechaEvaluacion || "",
+    observaciones: (observaciones || "").trim(),
+  };
+  if (fechaInicio && !antes) {
+    registrar(datos, s, actor, "Evaluación iniciada", "Fecha de inicio registrada.");
+  } else {
+    registrar(datos, s, actor, "Evaluación actualizada", "Información de la evaluación registrada.");
+  }
+  return unir(datos, s);
+}
+
+export async function cambiarEstado(actor, id, estado) {
+  exigirRol(actor, [ROLES.EVALUADOR], "cambiar el estado de la evaluación");
+  if (!ESTADOS.includes(estado)) throw new Error("Estado no válido.");
+  await demora(600);
+  const datos = cargar(ESTADO_INICIAL);
+  const s = porId(datos.solicitudes, id);
+  if (!s || !visiblePara(actor, s)) throw new Error("Solicitud no encontrada.");
+  if (s.evaluacion.estado === estado) return unir(datos, s);
+  s.evaluacion.estado = estado;
+  registrar(datos, s, actor, `Estado cambiado a ${estado}`, estado === "finalizada" ? "Evaluación completada." : "Evaluación reabierta.");
+  return unir(datos, s);
+}
+</file>
+
+<file path="vcm-psicolaboral/src/services/store.js">
+// Clave versionada: cambiar la versión reinicia los datos de demostración.
+export const CLAVE_DATOS = "vcm.mvp.v1";
+export const CLAVE_SESION = "vcm.mvp.sesion";
+
+export const demora = (ms = 300) => new Promise((r) => setTimeout(r, ms));
+
+export function cargar(estadoInicial) {
+  try {
+    const crudo = localStorage.getItem(CLAVE_DATOS);
+    if (!crudo) {
+      localStorage.setItem(CLAVE_DATOS, JSON.stringify(estadoInicial));
+      return structuredClone(estadoInicial);
+    }
+    return JSON.parse(crudo);
+  } catch {
+    return structuredClone(estadoInicial);
+  }
+}
+
+export function guardar(estado) {
+  localStorage.setItem(CLAVE_DATOS, JSON.stringify(estado));
+}
+
+export function restablecer(estadoInicial) {
+  localStorage.setItem(CLAVE_DATOS, JSON.stringify(estadoInicial));
+  sessionStorage.removeItem(CLAVE_SESION);
+}
+</file>
+
+<file path="vcm-psicolaboral/src/theme.css">
+/* VcM Psicolaboral — sistema visual.
+   Un acento (azul petróleo), un radio (8px), sin sombras ni gradientes.
+   Todo número de este archivo proviene del bloque de tokens :root. */
+
+:root {
+  /* TYPE — Inter UI densa + mono para datos */
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Consolas, "Liberation Mono", monospace;
+  --step--1: 0.8125rem; --step-0: 0.9375rem; --step-1: 1.125rem;
+  --step-2: 1.375rem; --step-3: 1.75rem;
+
+  /* SPACE — múltiplos de .25rem */
+  --space-2xs: 0.25rem; --space-xs: 0.5rem; --space-s: 0.75rem;
+  --space-m: 1rem; --space-l: 1.5rem; --space-xl: 2.25rem; --space-2xl: 3.5rem;
+
+  /* COLOR — papel / superficie / 3 tintas / 1 acento */
+  --paper: #f2f5f7; --surface: #ffffff;
+  --ink: #16232e; --ink-2: #44566a; --ink-3: #5b6e81;
+  --line: #dde4ea;
+  --accent: #0b5fa5; --accent-strong: #084d86; --accent-soft: #e7f1f9;
+  --ok: #1a7a4c; --ok-soft: #e3f3e9;
+  --warn: #8a5a00; --warn-soft: #fbf0d8;
+  --danger: #b42318; --danger-soft: #fdecea;
+  --sidebar: #0e2436; --sidebar-ink: #c9d6e2;
+
+  /* FORM */
+  --radius: 8px;
+
+  /* MOTION */
+  --dur: 160ms; --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Bootstrap mapping */
+  --bs-body-font-family: var(--font-ui);
+  --bs-body-bg: var(--paper);
+  --bs-body-color: var(--ink);
+  --bs-border-color: var(--line);
+  --bs-border-radius: var(--radius);
+  --bs-link-color: var(--accent);
+  --bs-link-hover-color: var(--accent-strong);
+}
+
+body { font-size: var(--step-0); -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { letter-spacing: -0.01em; }
+.mono { font-family: var(--font-mono); font-size: 0.92em; }
+
+/* Foco visible — nunca suprimido */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+/* Skip link */
+.skip-link { position: absolute; left: -9999px; top: 0; z-index: 1050; }
+.skip-link:focus { left: var(--space-s); top: var(--space-s); background: var(--surface); padding: var(--space-xs) var(--space-m); border: 1px solid var(--line); border-radius: var(--radius); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Botones y enlaces con el acento */
+.btn-primary { --bs-btn-bg: var(--accent); --bs-btn-border-color: var(--accent); --bs-btn-hover-bg: var(--accent-strong); --bs-btn-hover-border-color: var(--accent-strong); --bs-btn-active-bg: var(--accent-strong); --bs-btn-active-border-color: var(--accent-strong); --bs-btn-disabled-bg: var(--accent); --bs-btn-disabled-border-color: var(--accent); }
+.btn-outline-primary { --bs-btn-color: var(--accent); --bs-btn-border-color: var(--accent); --bs-btn-hover-bg: var(--accent); --bs-btn-hover-border-color: var(--accent); --bs-btn-active-bg: var(--accent-strong); --bs-btn-active-border-color: var(--accent-strong); }
+.btn { transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
+.btn:active { transform: translateY(1px); }
+.form-control, .form-select { background-color: #fff; }
+.form-control:focus, .form-select:focus, .form-check-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* Superficies: borde 1px, sin sombras */
+.card { border: 1px solid var(--line); border-radius: var(--radius); box-shadow: none; }
+.table { --bs-table-bg: var(--surface); }
+.table thead th { font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-2); font-weight: 600; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.table td { vertical-align: middle; }
+
+/* Badges de estado — texto + punto, nunca solo color */
+.badge-estado { display: inline-flex; align-items: center; gap: var(--space-xs); font-weight: 600; font-size: var(--step--1); padding: var(--space-2xs) var(--space-xs); border-radius: 999px; border: 1px solid transparent; white-space: nowrap; }
+.badge-estado::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; }
+.badge-pendiente { color: var(--warn); background: var(--warn-soft); border-color: #ecd9ac; }
+.badge-finalizada { color: var(--ok); background: var(--ok-soft); border-color: #bfe3cd; }
+
+/* App shell con sidebar */
+.app-shell { display: flex; min-height: 100vh; }
+.app-sidebar { width: 15rem; flex-shrink: 0; background: var(--sidebar); color: var(--sidebar-ink); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
+.app-brand { padding: var(--space-l) var(--space-m) var(--space-m); color: #fff; font-weight: 700; font-size: var(--step-0); line-height: 1.25; }
+.app-brand small { display: block; font-weight: 500; color: #8fa6bb; font-size: var(--step--1); margin-top: var(--space-2xs); }
+.app-nav { display: flex; flex-direction: column; gap: 2px; padding: 0 var(--space-xs); }
+.app-nav a { color: var(--sidebar-ink); text-decoration: none; padding: var(--space-xs) var(--space-s); border-radius: var(--radius); font-weight: 500; display: flex; align-items: center; gap: var(--space-xs); }
+.app-nav a:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.app-nav a.active { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.app-nav svg { flex-shrink: 0; }
+.app-user { margin-top: auto; padding: var(--space-m); border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: var(--step--1); }
+.app-user strong { display: block; color: #fff; font-size: var(--step-0); }
+.app-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.app-topbar { background: var(--surface); border-bottom: 1px solid var(--line); padding: var(--space-s) var(--space-l); display: flex; align-items: center; gap: var(--space-m); position: sticky; top: 0; z-index: 100; }
+.app-content { padding: var(--space-l); max-width: 72rem; width: 100%; margin: 0 auto; }
+
+/* Encabezado de página + breadcrumbs */
+.page-head { margin-bottom: var(--space-l); }
+.page-head h1 { font-size: var(--step-2); margin: 0 0 var(--space-2xs); }
+.page-head p { color: var(--ink-2); margin: 0; }
+.crumbs { font-size: var(--step--1); color: var(--ink-3); margin-bottom: var(--space-xs); }
+.crumbs a { color: var(--ink-2); }
+.crumbs [aria-current] { color: var(--ink); font-weight: 600; }
+
+/* Línea de tiempo de trazabilidad */
+.timeline { list-style: none; margin: 0; padding: 0; }
+.timeline li { position: relative; padding: 0 0 var(--space-l) var(--space-l); border-left: 2px solid var(--line); margin-left: 0.4rem; }
+.timeline li:last-child { padding-bottom: 0; }
+.timeline li::before { content: ""; position: absolute; left: -0.45rem; top: 0.2rem; width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
+.timeline time { font-family: var(--font-mono); font-size: var(--step--1); color: var(--ink-3); }
+
+/* Estados vacíos */
+.empty { text-align: center; padding: var(--space-2xl) var(--space-m); border: 1px dashed var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink-2); }
+.empty h2 { font-size: var(--step-1); color: var(--ink); }
+
+/* Skeletons */
+.skeleton { background: linear-gradient(90deg, #e8edf1 25%, #f4f7f9 50%, #e8edf1 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: var(--radius); }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* Toasts */
+.toasts { position: fixed; bottom: var(--space-m); right: var(--space-m); z-index: 1060; display: flex; flex-direction: column; gap: var(--space-xs); max-width: min(24rem, calc(100vw - 2rem)); }
+.toast-msg { background: var(--ink); color: #fff; border-radius: var(--radius); padding: var(--space-s) var(--space-m); font-size: var(--step--1); }
+
+/* Diálogo de confirmación */
+dialog.confirm { border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-l); max-width: 26rem; width: calc(100vw - 2rem); }
+dialog.confirm::backdrop { background: rgba(22, 35, 46, 0.45); }
+
+/* Login */
+.login-wrap { min-height: 100vh; display: grid; place-items: center; padding: var(--space-m); background: var(--sidebar); }
+.login-card { background: var(--surface); border-radius: var(--radius); padding: var(--space-xl); width: 100%; max-width: 26rem; }
+.login-card h1 { font-size: var(--step-2); }
+
+/* Tabla → tarjetas en móvil */
+@media (max-width: 767px) {
+  .app-sidebar { position: fixed; z-index: 1040; transform: translateX(-100%); transition: transform var(--dur) var(--ease); }
+  .app-sidebar.open { transform: none; }
+  .sidebar-scrim { position: fixed; inset: 0; background: rgba(22, 35, 46, 0.45); z-index: 1030; }
+  .app-content { padding: var(--space-m); }
+  table.table-cards thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  table.table-cards, table.table-cards tbody, table.table-cards tr, table.table-cards td { display: block; width: 100%; }
+  table.table-cards tbody { display: grid; gap: var(--space-s); }
+  table.table-cards tr { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-s) var(--space-m); }
+  table.table-cards td { border: 0; padding: var(--space-2xs) 0; display: flex; justify-content: space-between; gap: var(--space-m); align-items: baseline; }
+  table.table-cards td::before { content: attr(data-label); font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-3); font-weight: 600; flex-shrink: 0; }
+  table.table-cards td.no-label { display: block; }
+  table.table-cards td.no-label::before { content: none; }
+}
+
+/* Movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+</file>
+
+<file path="vcm-psicolaboral/public/favicon.svg">
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="46" fill="none" viewBox="0 0 48 46"><path fill="#863bff" d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z" style="fill:#863bff;fill:color(display-p3 .5252 .23 1);fill-opacity:1"/><mask id="a" width="48" height="46" x="0" y="0" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#000" d="M25.842 44.938c-.664.844-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.183c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.498 0-3.579-1.842-3.579H1.133c-.92 0-1.456-1.04-.92-1.787L9.91.473c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.578 1.842 3.578h11.377c.943 0 1.473 1.088.89 1.832L25.843 44.94z" style="fill:#000;fill-opacity:1"/></mask><g mask="url(#a)"><g filter="url(#b)"><ellipse cx="5.508" cy="14.704" fill="#ede6ff" rx="5.508" ry="14.704" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -4.47 31.516)"/></g><g filter="url(#c)"><ellipse cx="10.399" cy="29.851" fill="#ede6ff" rx="10.399" ry="29.851" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -39.328 7.883)"/></g><g filter="url(#d)"><ellipse cx="5.508" cy="30.487" fill="#7e14ff" rx="5.508" ry="30.487" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.814 -25.913 -14.639)scale(1 -1)"/></g><g filter="url(#e)"><ellipse cx="5.508" cy="30.599" fill="#7e14ff" rx="5.508" ry="30.599" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.814 -32.644 -3.334)scale(1 -1)"/></g><g filter="url(#f)"><ellipse cx="5.508" cy="30.599" fill="#7e14ff" rx="5.508" ry="30.599" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -34.34 30.47)"/></g><g filter="url(#g)"><ellipse cx="14.072" cy="22.078" fill="#ede6ff" rx="14.072" ry="22.078" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="rotate(93.35 24.506 48.493)scale(-1 1)"/></g><g filter="url(#h)"><ellipse cx="3.47" cy="21.501" fill="#7e14ff" rx="3.47" ry="21.501" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.009 28.708 47.59)scale(-1 1)"/></g><g filter="url(#i)"><ellipse cx="3.47" cy="21.501" fill="#7e14ff" rx="3.47" ry="21.501" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.009 28.708 47.59)scale(-1 1)"/></g><g filter="url(#j)"><ellipse cx=".387" cy="8.972" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(39.51 .387 8.972)"/></g><g filter="url(#k)"><ellipse cx="47.523" cy="-6.092" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 47.523 -6.092)"/></g><g filter="url(#l)"><ellipse cx="41.412" cy="6.333" fill="#47bfff" rx="5.971" ry="9.665" style="fill:#47bfff;fill:color(display-p3 .2799 .748 1);fill-opacity:1" transform="rotate(37.892 41.412 6.333)"/></g><g filter="url(#m)"><ellipse cx="-1.879" cy="38.332" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 -1.88 38.332)"/></g><g filter="url(#n)"><ellipse cx="-1.879" cy="38.332" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 -1.88 38.332)"/></g><g filter="url(#o)"><ellipse cx="35.651" cy="29.907" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 35.651 29.907)"/></g><g filter="url(#p)"><ellipse cx="38.418" cy="32.4" fill="#47bfff" rx="5.971" ry="15.297" style="fill:#47bfff;fill:color(display-p3 .2799 .748 1);fill-opacity:1" transform="rotate(37.892 38.418 32.4)"/></g></g><defs><filter id="b" width="60.045" height="41.654" x="-19.77" y="16.149" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="c" width="90.34" height="51.437" x="-54.613" y="-7.533" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="d" width="79.355" height="29.4" x="-49.64" y="2.03" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="e" width="79.579" height="29.4" x="-45.045" y="20.029" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="f" width="79.579" height="29.4" x="-43.513" y="21.178" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="g" width="74.749" height="58.852" x="15.756" y="-17.901" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="h" width="61.377" height="25.362" x="23.548" y="2.284" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="i" width="61.377" height="25.362" x="23.548" y="2.284" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="j" width="56.045" height="63.649" x="-27.636" y="-22.853" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="k" width="54.814" height="64.646" x="20.116" y="-38.415" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="l" width="33.541" height="35.313" x="24.641" y="-11.323" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="m" width="54.814" height="64.646" x="-29.286" y="6.009" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="n" width="54.814" height="64.646" x="-29.286" y="6.009" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="o" width="54.814" height="64.646" x="8.244" y="-2.416" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="p" width="39.409" height="43.623" x="18.713" y="10.588" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter></defs></svg>
+</file>
+
+<file path="vcm-psicolaboral/public/icons.svg">
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="bluesky-icon" viewBox="0 0 16 17">
+    <g clip-path="url(#bluesky-clip)"><path fill="#08060d" d="M7.75 7.735c-.693-1.348-2.58-3.86-4.334-5.097-1.68-1.187-2.32-.981-2.74-.79C.188 2.065.1 2.812.1 3.251s.241 3.602.398 4.13c.52 1.744 2.367 2.333 4.07 2.145-2.495.37-4.71 1.278-1.805 4.512 3.196 3.309 4.38-.71 4.987-2.746.608 2.036 1.307 5.91 4.93 2.746 2.72-2.746.747-4.143-1.747-4.512 1.702.189 3.55-.4 4.07-2.145.156-.528.397-3.691.397-4.13s-.088-1.186-.575-1.406c-.42-.19-1.06-.395-2.741.79-1.755 1.24-3.64 3.752-4.334 5.099"/></g>
+    <defs><clipPath id="bluesky-clip"><path fill="#fff" d="M.1.85h15.3v15.3H.1z"/></clipPath></defs>
+  </symbol>
+  <symbol id="discord-icon" viewBox="0 0 20 19">
+    <path fill="#08060d" d="M16.224 3.768a14.5 14.5 0 0 0-3.67-1.153c-.158.286-.343.67-.47.976a13.5 13.5 0 0 0-4.067 0c-.128-.306-.317-.69-.476-.976A14.4 14.4 0 0 0 3.868 3.77C1.546 7.28.916 10.703 1.231 14.077a14.7 14.7 0 0 0 4.5 2.306q.545-.748.965-1.587a9.5 9.5 0 0 1-1.518-.74q.191-.14.372-.293c2.927 1.369 6.107 1.369 8.999 0q.183.152.372.294-.723.437-1.52.74.418.838.963 1.588a14.6 14.6 0 0 0 4.504-2.308c.37-3.911-.63-7.302-2.644-10.309m-9.13 8.234c-.878 0-1.599-.82-1.599-1.82 0-.998.705-1.82 1.6-1.82.894 0 1.614.82 1.599 1.82.001 1-.705 1.82-1.6 1.82m5.91 0c-.878 0-1.599-.82-1.599-1.82 0-.998.705-1.82 1.6-1.82.893 0 1.614.82 1.599 1.82 0 1-.706 1.82-1.6 1.82"/>
+  </symbol>
+  <symbol id="documentation-icon" viewBox="0 0 21 20">
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="m15.5 13.333 1.533 1.322c.645.555.967.833.967 1.178s-.322.623-.967 1.179L15.5 18.333m-3.333-5-1.534 1.322c-.644.555-.966.833-.966 1.178s.322.623.966 1.179l1.534 1.321"/>
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M17.167 10.836v-4.32c0-1.41 0-2.117-.224-2.68-.359-.906-1.118-1.621-2.08-1.96-.599-.21-1.349-.21-2.848-.21-2.623 0-3.935 0-4.983.369-1.684.591-3.013 1.842-3.641 3.428C3 6.449 3 7.684 3 10.154v2.122c0 2.558 0 3.838.706 4.726q.306.383.713.671c.76.536 1.79.64 3.581.66"/>
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M3 10a2.78 2.78 0 0 1 2.778-2.778c.555 0 1.209.097 1.748-.047.48-.129.854-.503.982-.982.145-.54.048-1.194.048-1.749a2.78 2.78 0 0 1 2.777-2.777"/>
+  </symbol>
+  <symbol id="github-icon" viewBox="0 0 19 19">
+    <path fill="#08060d" fill-rule="evenodd" d="M9.356 1.85C5.05 1.85 1.57 5.356 1.57 9.694a7.84 7.84 0 0 0 5.324 7.44c.387.079.528-.168.528-.376 0-.182-.013-.805-.013-1.454-2.165.467-2.616-.935-2.616-.935-.349-.91-.864-1.143-.864-1.143-.71-.48.051-.48.051-.48.787.051 1.2.805 1.2.805.695 1.194 1.817.857 2.268.649.064-.507.27-.857.49-1.052-1.728-.182-3.545-.857-3.545-3.87 0-.857.31-1.558.8-2.104-.078-.195-.349-1 .077-2.078 0 0 .657-.208 2.14.805a7.5 7.5 0 0 1 1.946-.26c.657 0 1.328.092 1.946.26 1.483-1.013 2.14-.805 2.14-.805.426 1.078.155 1.883.078 2.078.502.546.799 1.247.799 2.104 0 3.013-1.818 3.675-3.558 3.87.284.247.528.714.528 1.454 0 1.052-.012 1.896-.012 2.156 0 .208.142.455.528.377a7.84 7.84 0 0 0 5.324-7.441c.013-4.338-3.48-7.844-7.773-7.844" clip-rule="evenodd"/>
+  </symbol>
+  <symbol id="social-icon" viewBox="0 0 20 20">
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M12.5 6.667a4.167 4.167 0 1 0-8.334 0 4.167 4.167 0 0 0 8.334 0"/>
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M2.5 16.667a5.833 5.833 0 0 1 8.75-5.053m3.837.474.513 1.035c.07.144.257.282.414.309l.93.155c.596.1.736.536.307.965l-.723.73a.64.64 0 0 0-.152.531l.207.903c.164.715-.213.991-.84.618l-.872-.52a.63.63 0 0 0-.577 0l-.872.52c-.624.373-1.003.094-.84-.618l.207-.903a.64.64 0 0 0-.152-.532l-.723-.729c-.426-.43-.289-.864.306-.964l.93-.156a.64.64 0 0 0 .412-.31l.513-1.034c.28-.562.735-.562 1.012 0"/>
+  </symbol>
+  <symbol id="x-icon" viewBox="0 0 19 19">
+    <path fill="#08060d" fill-rule="evenodd" d="M1.893 1.98c.052.072 1.245 1.769 2.653 3.77l2.892 4.114c.183.261.333.48.333.486s-.068.089-.152.183l-.522.593-.765.867-3.597 4.087c-.375.426-.734.834-.798.905a1 1 0 0 0-.118.148c0 .01.236.017.664.017h.663l.729-.83c.4-.457.796-.906.879-.999a692 692 0 0 0 1.794-2.038c.034-.037.301-.34.594-.675l.551-.624.345-.392a7 7 0 0 1 .34-.374c.006 0 .93 1.306 2.052 2.903l2.084 2.965.045.063h2.275c1.87 0 2.273-.003 2.266-.021-.008-.02-1.098-1.572-3.894-5.547-2.013-2.862-2.28-3.246-2.273-3.266.008-.019.282-.332 2.085-2.38l2-2.274 1.567-1.782c.022-.028-.016-.03-.65-.03h-.674l-.3.342a871 871 0 0 1-1.782 2.025c-.067.075-.405.458-.75.852a100 100 0 0 1-.803.91c-.148.172-.299.344-.99 1.127-.304.343-.32.358-.345.327-.015-.019-.904-1.282-1.976-2.808L6.365 1.85H1.8zm1.782.91 8.078 11.294c.772 1.08 1.413 1.973 1.425 1.984.016.017.241.02 1.05.017l1.03-.004-2.694-3.766L7.796 5.75 5.722 2.852l-1.039-.004-1.039-.004z" clip-rule="evenodd"/>
+  </symbol>
+</svg>
+</file>
+
+<file path="vcm-psicolaboral/src/components/NavbarBase.jsx">
+import { useState } from "react";
+import { Link, NavLink } from "react-router-dom";
+
+// Navbar reutilizable. El menú móvil lo controla React (se cierra al navegar),
+// por eso ya no hace falta el JS de Bootstrap.
+function NavbarBase({ brand, brandTo, links }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <nav className="navbar navbar-expand-lg bg-dark" data-bs-theme="dark">
+      <div className="container">
+        <Link className="navbar-brand" to={brandTo} onClick={() => setOpen(false)}>
+          {brand}
+        </Link>
+
+        <button
+          className="navbar-toggler"
+          type="button"
+          aria-controls="menuPrincipal"
+          aria-expanded={open}
+          aria-label="Mostrar navegación"
+          onClick={() => setOpen(!open)}
+        >
+          <span className="navbar-toggler-icon"></span>
+        </button>
+
+        <div className={`collapse navbar-collapse ${open ? "show" : ""}`} id="menuPrincipal">
+          <div className="navbar-nav ms-auto">
+            {links.map((l) => (
+              <NavLink key={l.to} to={l.to} end={l.end} className="nav-link" onClick={() => setOpen(false)}>
+                {l.label}
+              </NavLink>
+            ))}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+export default NavbarBase;
+</file>
+
+<file path="vcm-psicolaboral/src/components/OfertaCard.jsx">
+import { Link } from "react-router-dom";
+
+function OfertaCard({ oferta }) {
+  return (
+    <div className="col-md-6 col-lg-4">
+      <div className="card h-100">
+        <div className="card-body d-flex flex-column">
+          <h2 className="h5">{oferta.cargo}</h2>
+          <p className="text-secondary mb-2">{oferta.ubicacion}</p>
+
+          <div className="mb-3">
+            <span className="badge text-bg-light border me-1">{oferta.familiaCargo}</span>
+            {oferta.unidad && <span className="badge text-bg-light border">{oferta.unidad}</span>}
+          </div>
+
+          <p className="small text-secondary mt-auto mb-3">
+            {oferta.vacantes} {oferta.vacantes === 1 ? "vacante" : "vacantes"} · Cierra el{" "}
+            {new Date(oferta.fechaCierre + "T00:00").toLocaleDateString("es-CL")}
+          </p>
+
+          <div className="d-flex gap-2">
+            <Link to={`/ofertas/${oferta.id}`} className="btn btn-outline-primary btn-sm">
+              Ver detalle
+            </Link>
+            <Link to={`/ofertas/${oferta.id}/postular`} className="btn btn-primary btn-sm">
+              Postular
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default OfertaCard;
+</file>
+
+<file path="vcm-psicolaboral/src/components/PublicNavbar.jsx">
+import NavbarBase from "./NavbarBase";
+
+const links = [
+  { to: "/", label: "Ofertas laborales", end: true },
+  { to: "/login", label: "Acceso equipo" },
+];
+
+export default function PublicNavbar() {
+  return <NavbarBase brand="VcM Psicolaboral" brandTo="/" links={links} />;
+}
+</file>
+
+<file path="vcm-psicolaboral/src/components/StatCard.jsx">
+function StatCard({ value, label }) {
+  return (
+    <div className="col-6 col-lg-3">
+      <div className="card h-100">
+        <div className="card-body">
+          <h2 className="h3">{value}</h2>
+          <p className="mb-0">{label}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+export default StatCard;
+</file>
+
+<file path="vcm-psicolaboral/src/data/ofertas.js">
+// Modelo de Oferta
+// Vienen del Excel: familiaCargo, cargo, ubicacion, unidad
+// Propuestos:       id, vacantes, estado, fechaPublicacion, fechaCierre, descripcion, requisitos
+// estado: "borrador" | "abierta" | "cerrada"  (solo "abierta" se muestra y permite postular)
+
+const base = [
+  { familiaCargo: "Supervisor B",         cargo: "Supervisor de Calidad Magallanes",     ubicacion: "Planta Magallanes",              unidad: "Industrial",        vacantes: 1 },
+  { familiaCargo: "Profesional B C",      cargo: "Ingeniero Nuevas Tecnologías",         ubicacion: "Oficina Puerto Montt",           unidad: "Corporativo",       vacantes: 1 },
+  { familiaCargo: "Administrativo",       cargo: "Administrativo Frigorífico",           ubicacion: "Planta Magallanes, Puerto Natales", unidad: "Industrial",     vacantes: 1 },
+  { familiaCargo: "Técnico A",            cargo: "Técnico Mantención Senior",            ubicacion: "Piscicultura Reloncaví",         unidad: "Producción AD",     vacantes: 1 },
+  { familiaCargo: "Jefatura",             cargo: "Jefe Control Producción",              ubicacion: "Planta Magallanes",              unidad: "Industrial",        vacantes: 1 },
+  { familiaCargo: "Profesional B C",      cargo: "Veterinario",                          ubicacion: "Agua Mar Magallanes",            unidad: "Producción AM",     vacantes: 2 },
+  { familiaCargo: "Supervisor B",         cargo: "Supervisor de Calidad",                ubicacion: "Planta Magallanes",              unidad: "Industrial",        vacantes: 3 },
+  { familiaCargo: "Técnico B C",          cargo: "Asistente de Caldera",                 ubicacion: "Planta Alimento",                unidad: "Otros Producción",  vacantes: 1, estado: "cerrada" },
+  { familiaCargo: "Técnico B C",          cargo: "Técnico Prevención de Riesgos",        ubicacion: "Planta Magallanes",              unidad: "Industrial",        vacantes: 2 },
+  { familiaCargo: "Operario Calificado",  cargo: "Operador de Máquina",                  ubicacion: "Planta Cardonal",                unidad: "Industrial",        vacantes: 2 },
+  { familiaCargo: "Profesional B C",      cargo: "Asistente de Operaciones",             ubicacion: "Quellón",                        unidad: "Industrial",        vacantes: 1 },
+  { familiaCargo: "Profesional B C",      cargo: "Supervisor de Redes",                  ubicacion: "Puerto Cisnes",                  unidad: null,                vacantes: 1, estado: "borrador" },
+  { familiaCargo: "Técnico B C",          cargo: "Técnico Prevención de Riesgos (Temporada)", ubicacion: "Planta Chonchi",            unidad: null,                vacantes: 1 },
+  { familiaCargo: "Operario Calificado",  cargo: "Operador de Máquina",                  ubicacion: "Puerto Natales",                 unidad: null,                vacantes: 1 },
+  { familiaCargo: "Profesional B C",      cargo: "Coordinador Frigorífico",              ubicacion: "Planta Quellón",                 unidad: "Industrial",        vacantes: 1 },
+  { familiaCargo: "Técnico B C",          cargo: "Monitor de Calidad",                   ubicacion: "Planta Quellón",                 unidad: "Industrial",        vacantes: 2 },
+  { familiaCargo: "Técnico B C",          cargo: "Técnico Mantenimiento Proceso",        ubicacion: "Puerto Natales",                 unidad: "Industrial",        vacantes: 1 },
+  { familiaCargo: "Técnico B C",          cargo: "Técnico Mantención",                   ubicacion: "Hornopirén",                     unidad: "Producción AD",     vacantes: 1 },
+  { familiaCargo: "Técnico A",            cargo: "Técnico Mantenimiento Senior",         ubicacion: "Planta Magallanes",              unidad: "Industrial",        vacantes: 1 },
+];
+
+export const ofertas = base.map((o, i) => ({
+  id: i + 1,
+  estado: "abierta",
+  fechaPublicacion: "2026-09-28",
+  fechaCierre: "2026-10-31",
+  descripcion: "Descripción del cargo por completar.",
+  requisitos: ["Requisitos por completar."],
+  ...o,
+}));
+</file>
+
+<file path="vcm-psicolaboral/src/layouts/PublicLayout.jsx">
+import { Outlet } from "react-router-dom";
+import PublicNavbar from "../components/PublicNavbar";
+
+export default function PublicLayout() {
+  return (
+    <>
+      <PublicNavbar />
+      <main className="container py-4">
+        <Outlet />
+      </main>
+    </>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/lib/rut.js">
+export const limpiarRut = (rut = "") => rut.replace(/[^0-9kK]/g, "").toUpperCase();
+
+// Validación módulo 11
+export function validarRut(rut) {
+  const c = limpiarRut(rut);
+  if (c.length < 2) return false;
+  const cuerpo = c.slice(0, -1);
+  const dv = c.slice(-1);
+  if (!/^\d+$/.test(cuerpo)) return false;
+  let suma = 0, mul = 2;
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += Number(cuerpo[i]) * mul;
+    mul = mul === 7 ? 2 : mul + 1;
+  }
+  const r = 11 - (suma % 11);
+  const esperado = r === 11 ? "0" : r === 10 ? "K" : String(r);
+  return dv === esperado;
+}
+</file>
+
+<file path="vcm-psicolaboral/src/pages/public/LoginPage.jsx">
+import { useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useAuth } from "../../auth/useAuth";
+import { useToast } from "../../components/toast";
+import { Campo } from "../../components/forms";
+
+const schema = z.object({
+  email: z.string().email("Ingresa un correo válido"),
+  password: z.string().min(1, "Ingresa tu contraseña"),
+});
+
+export default function LoginPage() {
+  const { usuario, entrar } = useAuth();
+  const { avisar } = useToast();
+  const navigate = useNavigate();
+  const [verClave, setVerClave] = useState(false);
+  const [error, setError] = useState(null);
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+    resolver: zodResolver(schema),
+  });
+
+  if (usuario) return <Navigate to="/app" replace />;
+
+  const onSubmit = async ({ email, password }) => {
+    setError(null);
+    try {
+      const u = await entrar(email, password);
+      avisar(`Sesión iniciada. Bienvenido, ${u.nombre.split(" ")[0]}.`);
+      navigate("/app");
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  return (
+    <div className="login-wrap">
+      <div className="login-card">
+        <p className="text-secondary small mb-1">VcM Psicolaboral · AquaChile</p>
+        <h1>Iniciar sesión</h1>
+        <p className="text-secondary">Acceso para Analista de Reclutamiento y Profesional Evaluador.</p>
+
+        {error && <div className="alert alert-danger" role="alert">{error}</div>}
+
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <Campo id="email" label="Correo electrónico" error={errors.email?.message}>
+            <input type="email" autoComplete="username" className="form-control" {...register("email")} />
+          </Campo>
+          <Campo id="password" label="Contraseña" error={errors.password?.message}>
+            <div className="input-group">
+              <input
+                id="password"
+                type={verClave ? "text" : "password"}
+                autoComplete="current-password"
+                className="form-control"
+                aria-describedby={errors.password ? "password-err" : undefined}
+                aria-invalid={errors.password ? true : undefined}
+                {...register("password")}
+              />
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                aria-pressed={verClave}
+                aria-label={verClave ? "Ocultar contraseña" : "Mostrar contraseña"}
+                onClick={() => setVerClave(!verClave)}
+              >
+                {verClave ? "Ocultar" : "Ver"}
+              </button>
+            </div>
+          </Campo>
+          <button type="submit" className="btn btn-primary w-100" disabled={isSubmitting} aria-busy={isSubmitting}>
+            {isSubmitting ? "Verificando…" : "Iniciar sesión"}
+          </button>
+        </form>
+
+        <details className="mt-3">
+          <summary className="small">Usuarios de demostración</summary>
+          <ul className="small text-secondary mt-2 mb-0">
+            <li><span className="mono">analista@aquachile.test</span> · Analista-2026*</li>
+            <li><span className="mono">evaluador@aquachile.test</span> · Evaluador-2026*</li>
+          </ul>
+        </details>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/pages/public/NotFoundPage.jsx">
+import { Link } from "react-router-dom";
+
+export default function NotFoundPage() {
+  return (
+    <div>
+      <h1 className="h3">Página no encontrada</h1>
+      <p><Link to="/">Volver a las ofertas</Link></p>
+    </div>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/pages/public/OfertaDetallePage.jsx">
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { getOferta } from "../../services/ofertasService";
+
+export default function OfertaDetallePage() {
+  const { id } = useParams();
+  const [oferta, setOferta] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    getOferta(id).then(setOferta).catch(() => setError("Esta oferta no existe o ya no está disponible."));
+  }, [id]);
+
+  if (error) return (
+    <div className="alert alert-warning">
+      {error} <Link to="/">Volver a las ofertas</Link>
+    </div>
+  );
+  if (!oferta) return <p>Cargando…</p>;
+
+  return (
+    <article className="col-lg-8">
+      <Link to="/" className="small">← Volver a las ofertas</Link>
+      <h1 className="h3 mt-2">{oferta.cargo}</h1>
+      <p className="text-secondary">
+        {oferta.ubicacion} · {oferta.familiaCargo}{oferta.unidad ? ` · ${oferta.unidad}` : ""}
+      </p>
+
+      <h2 className="h5 mt-4">Descripción</h2>
+      <p>{oferta.descripcion}</p>
+
+      <h2 className="h5">Requisitos</h2>
+      <ul>{oferta.requisitos.map((r) => <li key={r}>{r}</li>)}</ul>
+
+      <p className="small text-secondary">
+        {oferta.vacantes} {oferta.vacantes === 1 ? "vacante" : "vacantes"} · Cierra el{" "}
+        {new Date(oferta.fechaCierre + "T00:00").toLocaleDateString("es-CL")}
+      </p>
+
+      <Link to={`/ofertas/${oferta.id}/postular`} className="btn btn-primary">Postular a este cargo</Link>
+    </article>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/pages/public/OfertasPage.jsx">
+import { useEffect, useMemo, useState } from "react";
+import { getOfertas } from "../../services/ofertasService";
+import OfertaCard from "../../components/OfertaCard";
+
+const unicos = (arr) => [...new Set(arr.filter(Boolean))].sort();
+
+export default function OfertasPage() {
+  const [ofertas, setOfertas] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+
+  const [texto, setTexto] = useState("");
+  const [ubicacion, setUbicacion] = useState("");
+  const [unidad, setUnidad] = useState("");
+  const [familia, setFamilia] = useState("");
+
+  useEffect(() => {
+    getOfertas()
+      .then(setOfertas)
+      .catch(() => setError("No pudimos cargar las ofertas. Intenta nuevamente."))
+      .finally(() => setCargando(false));
+  }, []);
+
+  const filtradas = useMemo(
+    () =>
+      ofertas.filter(
+        (o) =>
+          o.cargo.toLowerCase().includes(texto.toLowerCase()) &&
+          (!ubicacion || o.ubicacion === ubicacion) &&
+          (!unidad || o.unidad === unidad) &&
+          (!familia || o.familiaCargo === familia)
+      ),
+    [ofertas, texto, ubicacion, unidad, familia]
+  );
+
+  return (
+    <>
+      <section className="mb-4">
+        <h1 className="h3">Ofertas laborales</h1>
+        <p className="text-secondary">Revisa los cargos disponibles y postula directamente, sin crear cuenta.</p>
+      </section>
+
+      <section className="row g-2 mb-4">
+        <div className="col-12 col-lg-4">
+          <input className="form-control" placeholder="Buscar por cargo" aria-label="Buscar por cargo"
+            value={texto} onChange={(e) => setTexto(e.target.value)} />
+        </div>
+        <div className="col-12 col-md-4 col-lg-3">
+          <select className="form-select" aria-label="Ubicación" value={ubicacion} onChange={(e) => setUbicacion(e.target.value)}>
+            <option value="">Todas las ubicaciones</option>
+            {unicos(ofertas.map((o) => o.ubicacion)).map((v) => <option key={v}>{v}</option>)}
+          </select>
+        </div>
+        <div className="col-6 col-md-4 col-lg-2">
+          <select className="form-select" aria-label="Unidad" value={unidad} onChange={(e) => setUnidad(e.target.value)}>
+            <option value="">Todas las unidades</option>
+            {unicos(ofertas.map((o) => o.unidad)).map((v) => <option key={v}>{v}</option>)}
+          </select>
+        </div>
+        <div className="col-6 col-md-4 col-lg-3">
+          <select className="form-select" aria-label="Familia del cargo" value={familia} onChange={(e) => setFamilia(e.target.value)}>
+            <option value="">Todas las familias</option>
+            {unicos(ofertas.map((o) => o.familiaCargo)).map((v) => <option key={v}>{v}</option>)}
+          </select>
+        </div>
+      </section>
+
+      {cargando && <p>Cargando ofertas…</p>}
+      {error && <div className="alert alert-danger">{error}</div>}
+      {!cargando && !error && filtradas.length === 0 && (
+        <div className="alert alert-light border">No hay ofertas que coincidan con tu búsqueda. Prueba quitando algún filtro.</div>
+      )}
+
+      <section className="row g-3">
+        {filtradas.map((o) => <OfertaCard key={o.id} oferta={o} />)}
+      </section>
+    </>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/pages/public/PostularPage.jsx">
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { getOferta, postular } from "../../services/ofertasService";
+import { validarRut } from "../../lib/rut";
+
+const MAX_MB = 5;
+
+const schema = z.object({
+  nombre: z.string().min(3, "Ingresa tu nombre completo"),
+  rut: z.string().refine(validarRut, "RUT inválido"),
+  correo: z.string().email("Correo inválido"),
+  telefono: z.string().regex(/^\+?\d{8,12}$/, "Teléfono inválido (solo números, ej. +56912345678)"),
+  cv: z.any()
+    .refine((f) => f?.length === 1, "Adjunta tu CV")
+    .refine((f) => !f?.[0] || f[0].type === "application/pdf", "El CV debe ser un PDF")
+    .refine((f) => !f?.[0] || f[0].size <= MAX_MB * 1024 * 1024, `El CV no puede superar ${MAX_MB} MB`),
+  mensaje: z.string().max(500, "Máximo 500 caracteres").optional(),
+  consentimiento: z.boolean().refine((v) => v === true, "Debes aceptar el tratamiento de tus datos"),
+  web: z.string().max(0).optional(), // honeypot: debe quedar vacío
+});
+
+function Campo({ label, error, children }) {
+  return (
+    <div className="mb-3">
+      <label className="form-label">{label}</label>
+      {children}
+      {error && <div className="text-danger small mt-1">{error.message}</div>}
+    </div>
+  );
+}
+
+export default function PostularPage() {
+  const { id } = useParams();
+  const [oferta, setOferta] = useState(null);
+  const [errorOferta, setErrorOferta] = useState(false);
+  const [errorEnvio, setErrorEnvio] = useState(null);
+  const [enviado, setEnviado] = useState(false);
+
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+    resolver: zodResolver(schema),
+  });
+
+  useEffect(() => {
+    getOferta(id).then(setOferta).catch(() => setErrorOferta(true));
+  }, [id]);
+
+  const onSubmit = async (datos) => {
+    if (datos.web) return; // bot detectado
+    setErrorEnvio(null);
+    try {
+      await postular(id, datos);
+      setEnviado(true);
+    } catch (e) {
+      setErrorEnvio(e.message);
+    }
+  };
+
+  if (errorOferta) return (
+    <div className="alert alert-warning">Esta oferta ya no está disponible. <Link to="/">Ver otras ofertas</Link></div>
+  );
+  if (!oferta) return <p>Cargando…</p>;
+
+  if (enviado) return (
+    <div className="col-lg-6">
+      <h1 className="h3">Postulación recibida</h1>
+      <p>Recibimos tu postulación a <strong>{oferta.cargo}</strong>. Si tu perfil avanza, te contactaremos por correo.</p>
+      <Link to="/" className="btn btn-primary">Ver otras ofertas</Link>
+    </div>
+  );
+
+  return (
+    <div className="col-lg-6">
+      <Link to={`/ofertas/${oferta.id}`} className="small">← Volver al detalle</Link>
+      <h1 className="h3 mt-2">Postular a {oferta.cargo}</h1>
+      <p className="text-secondary">{oferta.ubicacion}</p>
+
+      {errorEnvio && <div className="alert alert-danger">{errorEnvio}</div>}
+
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <Campo label="Nombre completo" error={errors.nombre}>
+          <input className="form-control" {...register("nombre")} />
+        </Campo>
+        <Campo label="RUT" error={errors.rut}>
+          <input className="form-control" placeholder="12.345.678-5" {...register("rut")} />
+        </Campo>
+        <Campo label="Correo electrónico" error={errors.correo}>
+          <input type="email" className="form-control" {...register("correo")} />
+        </Campo>
+        <Campo label="Teléfono" error={errors.telefono}>
+          <input className="form-control" placeholder="+56912345678" {...register("telefono")} />
+        </Campo>
+        <Campo label={`CV en PDF (máx. ${MAX_MB} MB)`} error={errors.cv}>
+          <input type="file" accept="application/pdf" className="form-control" {...register("cv")} />
+        </Campo>
+        <Campo label="Mensaje (opcional)" error={errors.mensaje}>
+          <textarea rows="3" className="form-control" {...register("mensaje")} />
+        </Campo>
+
+        {/* Honeypot: oculto para personas, los bots lo llenan */}
+        <input type="text" tabIndex={-1} autoComplete="off" aria-hidden="true"
+          style={{ position: "absolute", left: "-9999px" }} {...register("web")} />
+
+        <div className="form-check mb-3">
+          <input type="checkbox" className="form-check-input" id="consentimiento" {...register("consentimiento")} />
+          <label htmlFor="consentimiento" className="form-check-label">
+            Acepto el tratamiento de mis datos personales para este proceso de selección.
+          </label>
+          {errors.consentimiento && <div className="text-danger small mt-1">{errors.consentimiento.message}</div>}
+        </div>
+
+        <button className="btn btn-primary" disabled={isSubmitting}>
+          {isSubmitting ? "Enviando…" : "Enviar postulación"}
+        </button>
+      </form>
+    </div>
+  );
+}
+</file>
+
+<file path="vcm-psicolaboral/src/services/ofertasService.js">
+import { ofertas } from "../data/ofertas";
+import { limpiarRut } from "../lib/rut";
+
+const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms));
+
+// Público: solo ofertas abiertas
+export async function getOfertas() {
+  await delay();
+  return ofertas.filter((o) => o.estado === "abierta");
+}
+
+export async function getOferta(id) {
+  await delay();
+  const o = ofertas.find((x) => x.id === Number(id));
+  if (!o || o.estado !== "abierta") throw new Error("Oferta no disponible");
+  return o;
+}
+
+// Admin: todas
+export async function getOfertasAdmin() {
+  await delay();
+  return ofertas;
+}
+
+// Postulación (mock). El backend real debe rechazar oferta + RUT duplicados.
+const postulaciones = new Set();
+export async function postular(ofertaId, datos) {
+  await delay(600);
+  const clave = `${ofertaId}-${limpiarRut(datos.rut)}`;
+  if (postulaciones.has(clave)) throw new Error("Ya postulaste a esta oferta con este RUT.");
+  postulaciones.add(clave);
+  // Futuro: api.post(`/ofertas/${ofertaId}/postulaciones`, formData /* multipart con el CV */)
+  return { ok: true };
+}
+</file>
+
+<file path="vcm-psicolaboral/src/App.css">
+
+</file>
+
+<file path="vcm-psicolaboral/src/App.jsx">
+import { Navigate, Route, Routes } from "react-router-dom";
+
+import PublicLayout from "./layouts/PublicLayout";
+import AppLayout from "./layouts/AppLayout";
+import { RequireAuth, RequireRole } from "./auth/guards";
+import { ROLES } from "./data/seed";
+
+import OfertasPage from "./pages/public/OfertasPage";
+import OfertaDetallePage from "./pages/public/OfertaDetallePage";
+import PostularPage from "./pages/public/PostularPage";
+import LoginPage from "./pages/public/LoginPage";
+import ForbiddenPage from "./pages/public/ForbiddenPage";
+import NotFoundPage from "./pages/public/NotFoundPage";
+
+import Dashboard from "./pages/app/Dashboard";
+import SolicitudesPage from "./pages/app/SolicitudesPage";
+import NuevaSolicitudPage from "./pages/app/NuevaSolicitudPage";
+import SolicitudDetallePage from "./pages/app/SolicitudDetallePage";
+import EvaluacionPage from "./pages/app/EvaluacionPage";
+import OfertasAdminPage from "./pages/app/OfertasAdminPage";
+
+function App() {
+  return (
+    <Routes>
+      {/* Zona pública */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<OfertasPage />} />
+        <Route path="/ofertas/:id" element={<OfertaDetallePage />} />
+        <Route path="/ofertas/:id/postular" element={<PostularPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
+
+      {/* Zona privada: exige sesión; cada rol ve solo lo autorizado */}
+      <Route path="/app" element={<RequireAuth />}>
+        <Route element={<AppLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="denegado" element={<ForbiddenPage />} />
+          <Route path="solicitudes" element={<SolicitudesPage />} />
+          <Route path="solicitudes/:id" element={<SolicitudDetallePage />} />
+          <Route element={<RequireRole roles={[ROLES.ANALISTA]} />}>
+            <Route path="solicitudes/nueva" element={<NuevaSolicitudPage />} />
+            <Route path="ofertas" element={<OfertasAdminPage />} />
+          </Route>
+          <Route element={<RequireRole roles={[ROLES.EVALUADOR]} />}>
+            <Route path="solicitudes/:id/evaluacion" element={<EvaluacionPage />} />
+          </Route>
+        </Route>
+      </Route>
+
+      <Route path="/admin/*" element={<Navigate to="/app" replace />} />
+    </Routes>
+  );
+}
+
+export default App;
+</file>
+
+<file path="vcm-psicolaboral/src/index.css">
+/* Fondo y tipografía base: ver tokens en theme.css. */
+</file>
+
+<file path="vcm-psicolaboral/src/main.jsx">
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./theme.css";
+import "./index.css";
+import App from "./App.jsx";
+import { AuthProvider } from "./auth/AuthContext.jsx";
+import { ToastProvider } from "./components/feedback.jsx";
+
+createRoot(document.getElementById("root")).render(
+  <StrictMode>
+    <AuthProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </ToastProvider>
+    </AuthProvider>
+  </StrictMode>
+);
+</file>
+
+<file path="vcm-psicolaboral/.gitignore">
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+</file>
+
+<file path="vcm-psicolaboral/eslint.config.js">
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{js,jsx}'],
+    extends: [
+      js.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      globals: globals.browser,
+      parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+  },
+])
+</file>
+
+<file path="vcm-psicolaboral/index.html">
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="VcM Psicolaboral — reclutamiento y evaluación psicolaboral, AquaChile." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <title>VcM Psicolaboral · AquaChile</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="vcm-psicolaboral/package.json">
+{
+  "name": "vcm-psicolaboral",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
+    "bootstrap": "^5.3.8",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-hook-form": "^7.89.0",
+    "react-router-dom": "^7.18.4",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "eslint": "^10.10.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.6",
+    "globals": "^17.12.0",
+    "vite": "^8.3.0"
+  }
+}
+</file>
+
+<file path="vcm-psicolaboral/README.md">
+# React + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+</file>
+
+<file path="vcm-psicolaboral/vite.config.js">
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+})
+</file>
+
+<file path="README.md">
+# ProyectoAquaChileFullStack — VcM Psicolaboral (MVP)
+
+Plataforma de reclutamiento y evaluación psicolaboral para AquaChile
+(asignatura Full Stack II, 2026). Documento base de requisitos:
+`docs/Actividad_Bases_MVP_AquaChile_DSY1104.docx` (fuente de verdad del negocio)
+y decisiones de implementación en `docs/plans/2026-10-05-mvp-psicolaboral.md`.
+
+## Objetivo
+
+MVP funcional (no mockup) que permite: iniciar/cerrar sesión por rol, registrar
+candidatos + solicitud de evaluación, listar/filtrar solicitudes, ver el detalle
+con trazabilidad, registrar la evaluación (fechas + observaciones) y cambiar su
+estado entre `pendiente` y `finalizada`.
+
+## Tecnologías
+
+- Frontend: React 19 + Vite 8 + React Router 7 + Bootstrap 5 + react-hook-form + zod.
+- Sin backend real en el MVP: la capa `src/services/` simula latencia y persiste
+  en `localStorage` (`vcm.mvp.v1`) con sesión en `sessionStorage`. Está diseñada
+  como punto de reemplazo por una API real sin tocar las páginas.
+- Sin dependencias agregadas respecto al proyecto base.
+
+## Requisitos
+
+- Node.js 20+ y npm.
+
+## Instalación y ejecución
+
+```powershell
+cd vcm-psicolaboral
+npm install
+npm run dev      # http://localhost:5173
+npm run lint     # verificación
+npm run build    # compilado de producción
+```
+
+No hay variables de entorno. No hay base de datos que instalar: los datos
+iniciales (`src/data/seed.js`) se cargan automáticamente al primer uso. Para
+reiniciar la demo, borra el `localStorage` del navegador.
+
+## Usuarios de prueba (desarrollo, ficticios)
+
+| Rol | Correo | Contraseña |
+|---|---|---|
+| Analista de Reclutamiento | `analista@aquachile.test` | `Analista-2026*` |
+| Profesional Evaluador | `evaluador@aquachile.test` | `Evaluador-2026*` |
+
+Las contraseñas se guardan solo como hash SHA-256 (WebCrypto), nunca en texto
+plano. Todos los datos de personas son ficticios.
+
+## Estructura (`vcm-psicolaboral/src/`)
+
+- `auth/` — `AuthContext`, `useAuth`, guards `RequireAuth`/`RequireRole`.
+- `components/` — `AppSidebar`, `feedback` (toasts, empty states, skeletons,
+  confirmación, breadcrumbs, timeline), `forms` (Campo, EstadoBadge), tarjetas.
+- `data/` — `ofertas.js` (catálogo público), `seed.js` (usuarios, candidatos,
+  solicitudes con historial).
+- `layouts/` — `PublicLayout` (portal) y `AppLayout` (shell con sidebar).
+- `lib/` — `rut.js` (validación módulo 11), `crypto.js` (SHA-256), `fechas.js`.
+- `pages/public/` — ofertas, detalle, postulación, login, 403/404.
+- `pages/app/` — dashboard, solicitudes, nueva solicitud, detalle, evaluación.
+- `services/` — `ofertasService`, `authService`, `solicitudesService` (con
+  control de permisos), `store` (persistencia).
+- `theme.css` — sistema visual (tokens + componentes).
+
+## Roles y permisos
+
+| Acción | Analista | Evaluador |
+|---|---|---|
+| Registrar candidato + crear solicitud | ✅ | ❌ |
+| Listar / buscar / filtrar / ver detalle | todas | solo asignadas |
+| Registrar fechas y observaciones | ❌ | ✅ asignadas |
+| Cambiar estado pendiente ↔ finalizada | ❌ | ✅ asignadas (con confirmación) |
+| Ofertas (catálogo, solo lectura) | ✅ | ❌ |
+
+Los permisos se verifican en los servicios además de la UI y cada cambio queda
+en el historial de la solicitud (trazabilidad). No existe rol administrador
+(duda pendiente del documento base); `ROLES` en `seed.js` es extensible.
+
+## Decisiones mínimas documentadas
+
+D1 Persistencia local en vez de backend (respeta la estructura existente).
+D2 Asignación automática al evaluador disponible (campo `evaluadorId` permite
+selector futuro). D3 Estado reversible con confirmación + historial. D4
+`fechaInicio` y `fechaEvaluacion` separadas (ambas aparecen en el documento).
+D5 RUT validado + puesto con sugerencias del catálogo existente. D6 Ofertas
+admin en solo lectura para el Analista. D7 Sesión en `sessionStorage`.
+
+## Otros archivos
+
+- `vistaAdmin/index.html` — mockup de referencia visual (no es código productivo;
+  contiene credenciales ficticias en claro, no usar).
+</file>
+
+</files>

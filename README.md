@@ -1,91 +1,92 @@
-# 🧠 VCM Psicolaboral
+# ProyectoAquaChileFullStack — VcM Psicolaboral (MVP)
 
-Plataforma integral para la gestión de ofertas de trabajo, postulaciones y administración de procesos de selección psicolaboral. 
+Plataforma de reclutamiento y evaluación psicolaboral para AquaChile
+(asignatura Full Stack II, 2026). Documento base de requisitos:
+`docs/Actividad_Bases_MVP_AquaChile_DSY1104.docx` (fuente de verdad del negocio)
+y decisiones de implementación en `docs/plans/2026-10-05-mvp-psicolaboral.md`.
 
-Este proyecto está desarrollado con **React** y **Vite**, y cuenta con una arquitectura dividida en dos áreas principales: un portal público para postulantes y un panel de administración para reclutadores o psicólogos laborales.
+## Objetivo
 
----
+MVP funcional (no mockup) que permite: iniciar/cerrar sesión por rol, registrar
+candidatos + solicitud de evaluación, listar/filtrar solicitudes, ver el detalle
+con trazabilidad, registrar la evaluación (fechas + observaciones) y cambiar su
+estado entre `pendiente` y `finalizada`.
 
-## 🚀 Características Principales
+## Tecnologías
 
-### 🌐 Portal Público
-* **Exploración de Ofertas:** Visualización del listado de ofertas laborales disponibles (`OfertasPage`).
-* **Detalle de Ofertas:** Información completa de cada vacante (`OfertaDetallePage`).
-* **Sistema de Postulación:** Formularios validados para el ingreso de antecedentes del candidato (`PostularPage`), con validación de RUT chileno.
-* **Autenticación:** Acceso al sistema para usuarios registrados (`LoginPage`).
+- Frontend: React 19 + Vite 8 + React Router 7 + Bootstrap 5 + react-hook-form + zod.
+- Sin backend real en el MVP: la capa `src/services/` simula latencia y persiste
+  en `localStorage` (`vcm.mvp.v1`) con sesión en `sessionStorage`. Está diseñada
+  como punto de reemplazo por una API real sin tocar las páginas.
+- Sin dependencias agregadas respecto al proyecto base.
 
-### 🔐 Panel de Administración (Admin)
-* **Dashboard:** Vista general con métricas y estadísticas del sistema (`Dashboard`, `StatCard`).
-* **Gestión de Ofertas:** Creación, edición y seguimiento de las vacantes activas (`OfertasAdminPage`).
-* **Administración de Candidatos:** Revisión de perfiles y estados en el proceso de selección (`CandidatosPage`).
-* **Solicitudes:** Control de los requerimientos de nuevas contrataciones (`SolicitudesPage`).
+## Requisitos
 
----
+- Node.js 20+ y npm.
 
-## 🛠️ Tecnologías Utilizadas
+## Instalación y ejecución
 
-* **Framework:** [React 18](https://reactjs.org/)
-* **Build Tool:** [Vite](https://vitejs.dev/)
-* **Enrutamiento:** [React Router DOM](https://reactrouter.com/)
-* **Formularios:** [React Hook Form](https://react-hook-form.com/)
-* **Validación de Esquemas:** [Zod](https://zod.dev/) + `@hookform/resolvers`
-* **Estilos:** CSS estándar / CSS Modules (según configuración de `index.css` y `App.css`)
-
----
-
-## ⚙️ Instalación y Ejecución Local
-
-Sigue estos pasos para levantar el entorno de desarrollo en tu máquina local:
-
-1. **Clonar el repositorio:**
-   ```bash
-   git clone <URL_DEL_REPOSITORIO>
-   ```
-
-2. **Ingresar al directorio del proyecto:**
-   ```bash
-   cd vcm-psicolaboral
-   ```
-
-3. **Instalar las dependencias base:**
-   ```bash
-   npm install
-   ```
-
-4. **Instalar las dependencias específicas de enrutamiento y formularios (requerido):**
-   ```bash
-   npm install react-router-dom react-hook-form zod @hookform/resolvers
-   ```
-
-5. **Iniciar el servidor de desarrollo:**
-   ```bash
-   npm run dev
-   ```
-   
-   La aplicación estará disponible típicamente en `http://localhost:5173/` (Vite te indicará el puerto exacto en la terminal).
-
----
-
-## 📂 Estructura del Proyecto
-
-El código fuente principal se encuentra en el directorio `/src`:
-
-```text
-src/
-├── components/        # Componentes reutilizables (Navbar, Cards de Ofertas, etc.)
-├── data/              # Datos simulados (mocks) para desarrollo local
-├── layouts/           # Plantillas maestras (AdminLayout, PublicLayout)
-├── lib/               # Utilidades y funciones de ayuda (ej. validador de RUT)
-├── pages/
-│   ├── admin/         # Vistas protegidas para administradores
-│   └── public/        # Vistas accesibles para cualquier visitante
-├── services/          # Integración con APIs y lógica de negocio (ofertasService)
-├── App.jsx            # Componente raíz y configuración global
-└── main.jsx           # Punto de entrada de la aplicación
+```powershell
+cd vcm-psicolaboral
+npm install
+npm run dev      # http://localhost:5173
+npm run lint     # verificación
+npm run build    # compilado de producción
 ```
 
----
+No hay variables de entorno. No hay base de datos que instalar: los datos
+iniciales (`src/data/seed.js`) se cargan automáticamente al primer uso. Para
+reiniciar la demo, borra el `localStorage` del navegador.
 
-## 📜 Licencia
+## Usuarios de prueba (desarrollo, ficticios)
 
-Este proyecto es de uso privado. Todos los derechos reservados.
+| Rol | Correo | Contraseña |
+|---|---|---|
+| Analista de Reclutamiento | `analista@aquachile.test` | `Analista-2026*` |
+| Profesional Evaluador | `evaluador@aquachile.test` | `Evaluador-2026*` |
+
+Las contraseñas se guardan solo como hash SHA-256 (WebCrypto), nunca en texto
+plano. Todos los datos de personas son ficticios.
+
+## Estructura (`vcm-psicolaboral/src/`)
+
+- `auth/` — `AuthContext`, `useAuth`, guards `RequireAuth`/`RequireRole`.
+- `components/` — `AppSidebar`, `feedback` (toasts, empty states, skeletons,
+  confirmación, breadcrumbs, timeline), `forms` (Campo, EstadoBadge), tarjetas.
+- `data/` — `ofertas.js` (catálogo público), `seed.js` (usuarios, candidatos,
+  solicitudes con historial).
+- `layouts/` — `PublicLayout` (portal) y `AppLayout` (shell con sidebar).
+- `lib/` — `rut.js` (validación módulo 11), `crypto.js` (SHA-256), `fechas.js`.
+- `pages/public/` — ofertas, detalle, postulación, login, 403/404.
+- `pages/app/` — dashboard, solicitudes, nueva solicitud, detalle, evaluación.
+- `services/` — `ofertasService`, `authService`, `solicitudesService` (con
+  control de permisos), `store` (persistencia).
+- `theme.css` — sistema visual (tokens + componentes).
+
+## Roles y permisos
+
+| Acción | Analista | Evaluador |
+|---|---|---|
+| Registrar candidato + crear solicitud | ✅ | ❌ |
+| Listar / buscar / filtrar / ver detalle | todas | solo asignadas |
+| Registrar fechas y observaciones | ❌ | ✅ asignadas |
+| Cambiar estado pendiente ↔ finalizada | ❌ | ✅ asignadas (con confirmación) |
+| Ofertas (catálogo, solo lectura) | ✅ | ❌ |
+
+Los permisos se verifican en los servicios además de la UI y cada cambio queda
+en el historial de la solicitud (trazabilidad). No existe rol administrador
+(duda pendiente del documento base); `ROLES` en `seed.js` es extensible.
+
+## Decisiones mínimas documentadas
+
+D1 Persistencia local en vez de backend (respeta la estructura existente).
+D2 Asignación automática al evaluador disponible (campo `evaluadorId` permite
+selector futuro). D3 Estado reversible con confirmación + historial. D4
+`fechaInicio` y `fechaEvaluacion` separadas (ambas aparecen en el documento).
+D5 RUT validado + puesto con sugerencias del catálogo existente. D6 Ofertas
+admin en solo lectura para el Analista. D7 Sesión en `sessionStorage`.
+
+## Otros archivos
+
+- `vistaAdmin/index.html` — mockup de referencia visual (no es código productivo;
+  contiene credenciales ficticias en claro, no usar).
